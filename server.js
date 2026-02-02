@@ -11,6 +11,15 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 
+// CORS – permite que o Grafana (ou qualquer origem) acesse a API
+app.use((_req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
+app.options('*', (_req, res) => res.sendStatus(200));
+
 // Configuração para aceitar certificados SSL auto-assinados (apenas para desenvolvimento)
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
@@ -20,6 +29,9 @@ const httpsAgent = new https.Agent({
 let activitiesData = null;
 let authToken = null;
 let tokenExpirationTime = null;
+
+// Cache do mock para evitar releitura do disco a cada ciclo
+let mockCache = null;
 
 // Função para autenticar e obter o token
 async function authenticatePPDM(reason = 'inicial') {
@@ -46,11 +58,11 @@ async function authenticatePPDM(reason = 'inicial') {
     tokenExpirationTime = Date.now() + (60 * 60 * 1000);
 
     const expiresIn = new Date(tokenExpirationTime).toLocaleString('pt-BR');
-    console.log(`[AUTH] ✓ Autenticação bem-sucedida! Token válido até: ${expiresIn}`);
+    console.log(`[AUTH] Autenticação bem-sucedida! Token válido até: ${expiresIn}`);
 
     return authToken;
   } catch (error) {
-    console.error('[AUTH] ✗ Erro ao autenticar:', error.message);
+    console.error('[AUTH] Erro ao autenticar:', error.message);
     if (error.response) {
       console.error('[AUTH] Status:', error.response.status);
       console.error('[AUTH] Dados:', error.response.data);
@@ -64,23 +76,31 @@ function isTokenValid() {
   return authToken && tokenExpirationTime && Date.now() < tokenExpirationTime;
 }
 
+// Carrega mock uma única vez do disco e guarda em memória
+function loadMockData() {
+  if (!mockCache) {
+    console.log('[FETCH] Lendo saida.json do disco (primeira vez)...');
+    mockCache = JSON.parse(
+      fs.readFileSync(path.join(__dirname, 'saida.json'), 'utf8')
+    );
+    console.log(`[FETCH] ${mockCache.content?.length || 0} atividades carregadas do mock`);
+  }
+  return mockCache;
+}
+
 // Função para buscar atividades da API PPDM
 async function fetchActivities() {
   try {
-    // Se estiver em modo mock, usar o arquivo saida.json
+    // Se estiver em modo mock, usar o arquivo saida.json (cache em memória)
     if (process.env.USE_MOCK_DATA === 'true') {
-      console.log('[FETCH] Usando dados mock do arquivo saida.json');
-      const mockData = JSON.parse(
-        fs.readFileSync(path.join(__dirname, 'saida.json'), 'utf8')
-      );
-      activitiesData = mockData;
-      console.log(`[FETCH] ${mockData.content?.length || 0} atividades carregadas do mock`);
-      return mockData;
+      console.log('[FETCH] Usando dados mock (cache em memória)');
+      activitiesData = loadMockData();
+      return activitiesData;
     }
 
     // Verificar se o token é válido, senão autenticar novamente (RENOVAÇÃO REATIVA)
     if (!isTokenValid()) {
-      console.log('[FETCH] ⚠️  Token inválido ou expirado detectado na verificação');
+      console.log('[FETCH] Token inválido ou expirado detectado na verificação');
       await authenticatePPDM('token expirado - renovação reativa');
     }
 
@@ -113,7 +133,7 @@ async function fetchActivities() {
 
       // Se for erro 401, tentar autenticar novamente (RENOVAÇÃO REATIVA)
       if (error.response.status === 401) {
-        console.log('[FETCH] ⚠️  Token expirado (erro 401 da API)');
+        console.log('[FETCH] Token expirado (erro 401 da API)');
         authToken = null;
         tokenExpirationTime = null;
         await authenticatePPDM('erro 401 - renovação reativa');
@@ -123,19 +143,28 @@ async function fetchActivities() {
   }
 }
 
-// Rota para obter as atividades originais (mantida para front-end Vue)
-app.get('/ppdm-activities', (req, res) => {
+// Resposta padrão para endpoints de dados – retorna o JSON raw das atividades
+function sendActivities(_req, res) {
   if (!activitiesData) {
     return res.status(503).json({
       error: 'Dados ainda não disponíveis',
       message: 'Aguarde a primeira sincronização com a API'
     });
   }
-
   res.json(activitiesData);
-});
+}
 
-// Rotas exigidas pelo plugin JSON Fetcher (nagasudhirpulla)
+// ------------------------------------------------------------------
+// Rotas de dados – retornam JSON raw para Vue.js e Grafana JSON plugin
+// ------------------------------------------------------------------
+
+// GET /ppdm-activities  – usado pelo front-end Vue
+app.get('/ppdm-activities', sendActivities);
+
+// POST /ppdm-activities – usado pelo plugin JSON do Grafana (alguns plugins usam POST)
+app.post('/ppdm-activities', sendActivities);
+
+// GET /  – health-check exigido por vários plugins JSON do Grafana
 app.get('/', (_req, res) => {
   res.json({
     status: 'ok',
@@ -144,120 +173,12 @@ app.get('/', (_req, res) => {
   });
 });
 
-app.post('/', (req, res) => {
-  if (!activitiesData) {
-    return res.status(503).json({
-      error: 'Dados ainda não disponíveis',
-      message: 'Aguarde a primeira sincronização com a API'
-    });
-  }
-
-  const timeRange = extractTimeRange(req.body);
-  const payloadFilters = extractPayloadFilters(req.body);
-  const frames = buildGrafanaFrames(activitiesData.content, timeRange, payloadFilters);
-
-  res.json({ frames });
-});
-
-function extractTimeRange(body) {
-  const range = body?.TimeRange ?? body?.timeRange;
-  if (range && range.From && range.To) {
-    const from = Date.parse(range.From);
-    const to = Date.parse(range.To);
-    if (!Number.isNaN(from) && !Number.isNaN(to)) {
-      return { from, to };
-    }
-  }
-
-  if (body?.from && body?.to) {
-    const from = Number(body.from);
-    const to = Number(body.to);
-    if (!Number.isNaN(from) && !Number.isNaN(to)) {
-      return { from, to };
-    }
-  }
-
-  return null;
-}
-
-function extractPayloadFilters(body) {
-  const rawPayload =
-    body?.payload ??
-    body?.JSON?.payload ??
-    body?.json?.payload ??
-    body?.JSON?.jsonPayload;
-
-  if (!rawPayload) {
-    return {};
-  }
-
-  try {
-    return typeof rawPayload === 'string'
-      ? JSON.parse(rawPayload)
-      : rawPayload;
-  } catch (error) {
-    console.warn('[GRAFANA] Não foi possível parsear o payload do plugin:', error.message);
-    return {};
-  }
-}
-
-function buildGrafanaFrames(activities = [], timeRange, filters = {}) {
-  const filtered = (activities || [])
-    .map((activity) => {
-      const startTime = new Date(activity.startTime).getTime();
-      return { ...activity, __startMs: startTime };
-    })
-    .filter((activity) => {
-      if (!activity.__startMs || Number.isNaN(activity.__startMs)) {
-        return false;
-      }
-
-      if (timeRange) {
-        if (activity.__startMs < timeRange.from || activity.__startMs > timeRange.to) {
-          return false;
-        }
-      }
-
-      if (filters.category && activity.category !== filters.category) {
-        return false;
-      }
-
-      if (filters.asset && activity.asset?.name !== filters.asset) {
-        return false;
-      }
-
-      if (filters.status && activity.result?.status !== filters.status) {
-        return false;
-      }
-
-      return true;
-    })
-    .sort((a, b) => a.__startMs - b.__startMs);
-
-  const timestampsSeconds = filtered.map((activity) => Math.floor(activity.__startMs / 1000));
-  const bytes = filtered.map((activity) => Number(activity.stats?.bytesTransferred ?? 0));
-  const durationsSeconds = filtered.map((activity) => Math.round((activity.duration ?? 0) / 1000));
-
-  const columns = [];
-  columns.push({ name: 'timestamp', values: timestampsSeconds, labels: null });
-
-  if (durationsSeconds.some((value) => value > 0)) {
-    columns.push({ name: 'durationSeconds', values: durationsSeconds, labels: null });
-  }
-
-  if (bytes.some((value) => value > 0)) {
-    columns.push({ name: 'bytesTransferred', values: bytes, labels: null });
-  }
-
-  return [
-    {
-      columns
-    }
-  ];
-}
+// POST / – endpoint principal que o plugin JSON Fetcher do Grafana chama
+//          Retorna JSON raw para que as queries JSONPath ($. content) funcionem
+app.post('/', sendActivities);
 
 // Rota de health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   const tokenInfo = tokenExpirationTime ? {
     expiresAt: new Date(tokenExpirationTime).toISOString(),
     expiresIn: Math.max(0, Math.floor((tokenExpirationTime - Date.now()) / 1000)),
@@ -280,14 +201,14 @@ async function startTokenRefreshService() {
   if (process.env.USE_MOCK_DATA !== 'true') {
     // Renovar token a cada 55 minutos (antes de expirar em 1 hora) - RENOVAÇÃO PROATIVA
     setInterval(async () => {
-      console.log('[TOKEN-REFRESH] 🔄 Renovando token proativamente (timer 55 min)...');
+      console.log('[TOKEN-REFRESH] Renovando token proativamente (timer 55 min)...');
       await authenticatePPDM('renovação proativa - timer 55 minutos');
     }, 55 * 60 * 1000); // 55 minutos
 
-    console.log('[TOKEN-REFRESH] ✓ Serviço de renovação proativa configurado (intervalo: 55 minutos)');
-    console.log('[TOKEN-REFRESH] ℹ️  Renovação também ocorre reativamente quando o token expira');
+    console.log('[TOKEN-REFRESH] Serviço de renovação proativa configurado (intervalo: 55 minutos)');
+    console.log('[TOKEN-REFRESH] Renovação também ocorre reativamente quando o token expira');
   } else {
-    console.log('[TOKEN-REFRESH] ℹ️  Renovação de token desabilitada (modo mock)');
+    console.log('[TOKEN-REFRESH] Renovação de token desabilitada (modo mock)');
   }
 }
 
@@ -314,9 +235,9 @@ app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Escutando em todas as interfaces (0.0.0.0)`);
   console.log(`${'='.repeat(50)}\n`);
   console.log(`Rotas disponíveis:`);
-  console.log(`  GET http://localhost:${PORT}/ppdm-activities`);
-  console.log(`  GET http://<seu-ip>:${PORT}/ppdm-activities`);
-  console.log(`  GET http://localhost:${PORT}/health`);
+  console.log(`  GET  http://localhost:${PORT}/ppdm-activities`);
+  console.log(`  POST http://localhost:${PORT}/ppdm-activities`);
+  console.log(`  GET  http://localhost:${PORT}/health`);
   console.log(`\nModo: ${process.env.USE_MOCK_DATA === 'true' ? 'MOCK (usando saida.json)' : 'API REAL'}\n`);
 
   // Iniciar serviço de sincronização

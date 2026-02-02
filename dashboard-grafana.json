@@ -1,10 +1,10 @@
 {
   "id": null,
-  "uid": "DS-PPDM",
+  "uid": "jsds",
   "title": "PPDM – Activities & Backup Health",
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "1m",
   "panels": [
     {
@@ -14,13 +14,24 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "datasource": { "uid": "dsjs" },
           "queryType": "json",
-          "rootSelector": "$.content",
-          "fields": [{ "name": "id", "jsonPath": "$.id", "type": "string" }]
+          "rootSelector": "$.content[*]",
+          "fields": [
+            { "name": "id", "jsonPath": "$.id", "type": "string" }
+          ]
         }
       ],
-      "options": { "reduceOptions": { "calcs": ["count"] } }
+      "options": {
+        "reduceOptions": { "calcs": ["count"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        }
+      }
     },
     {
       "type": "stat",
@@ -29,13 +40,24 @@
       "targets": [
         {
           "refId": "B",
-          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "datasource": { "uid": "dsjs" },
           "queryType": "json",
           "rootSelector": "$.content[?(@.result.status=='OK')]",
-          "fields": [{ "name": "id", "jsonPath": "$.id", "type": "string" }]
+          "fields": [
+            { "name": "id", "jsonPath": "$.id", "type": "string" }
+          ]
         }
       ],
-      "options": { "reduceOptions": { "calcs": ["count"] } }
+      "options": {
+        "reduceOptions": { "calcs": ["count"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "green" }
+        }
+      }
     },
     {
       "type": "stat",
@@ -44,36 +66,79 @@
       "targets": [
         {
           "refId": "C",
-          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "datasource": { "uid": "dsjs" },
           "queryType": "json",
           "rootSelector": "$.content[?(@.result.status=='FAILED' || @.result.status=='ERROR')]",
-          "fields": [{ "name": "id", "jsonPath": "$.id", "type": "string" }]
+          "fields": [
+            { "name": "id", "jsonPath": "$.id", "type": "string" }
+          ]
         }
       ],
-      "options": { "reduceOptions": { "calcs": ["count"] } }
+      "options": {
+        "reduceOptions": { "calcs": ["count"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "red" }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Jobs Warning",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "refId": "W",
+          "datasource": { "uid": "dsjs" },
+          "queryType": "json",
+          "rootSelector": "$.content[?(@.result.status=='WARNING')]",
+          "fields": [
+            { "name": "id", "jsonPath": "$.id", "type": "string" }
+          ]
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["count"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "yellow" }
+        }
+      }
     },
     {
       "type": "timeseries",
-      "title": "Job Duration (minutes)",
+      "title": "Job Duration",
       "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
       "targets": [
         {
           "refId": "D",
-          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "datasource": { "uid": "dsjs" },
           "queryType": "json",
-          "rootSelector": "$.content",
-          "timeField": "startTime",
+          "rootSelector": "$.content[*]",
           "fields": [
             { "name": "startTime", "jsonPath": "$.startTime", "type": "time" },
-            { "name": "durationMs", "jsonPath": "$.duration", "type": "number" }
+            { "name": "duration", "jsonPath": "$.duration", "type": "number" }
           ]
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "m",
-          "custom": { "transform": "divide", "factor": 60000 }
-        }
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "startTime" },
+            "properties": [
+              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": true, "viz": false } }
+            ]
+          }
+        ]
       }
     },
     {
@@ -83,10 +148,9 @@
       "targets": [
         {
           "refId": "E",
-          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "datasource": { "uid": "dsjs" },
           "queryType": "json",
-          "rootSelector": "$.content",
-          "timeField": "startTime",
+          "rootSelector": "$.content[*]",
           "fields": [
             { "name": "startTime", "jsonPath": "$.startTime", "type": "time" },
             { "name": "bytesTransferred", "jsonPath": "$.stats.bytesTransferred", "type": "number" }
@@ -94,7 +158,17 @@
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "bytes" }
+        "defaults": {
+          "unit": "decbytes"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "startTime" },
+            "properties": [
+              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": true, "viz": false } }
+            ]
+          }
+        ]
       }
     },
     {
@@ -104,31 +178,63 @@
       "targets": [
         {
           "refId": "F",
-          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "datasource": { "uid": "dsjs" },
           "queryType": "json",
-          "rootSelector": "$.content"
+          "rootSelector": "$.content[*]",
+          "fields": [
+            { "name": "Name",       "jsonPath": "$.name",                    "type": "string" },
+            { "name": "Category",   "jsonPath": "$.category",                "type": "string" },
+            { "name": "Status",     "jsonPath": "$.result.status",           "type": "string" },
+            { "name": "State",      "jsonPath": "$.state",                   "type": "string" },
+            { "name": "Start",      "jsonPath": "$.startTime",               "type": "time"   },
+            { "name": "End",        "jsonPath": "$.endTime",                 "type": "time"   },
+            { "name": "Duration",   "jsonPath": "$.duration",                "type": "number" },
+            { "name": "Bytes",      "jsonPath": "$.stats.bytesTransferred",  "type": "number" }
+          ]
         }
       ],
-      "transformations": [
-        {
-          "id": "extractFields",
-          "options": {
-            "paths": {
-              "Name": "$.name",
-              "Category": "$.category",
-              "Asset": "$.asset.name",
-              "Host": "$.host.name",
-              "Status": "$.result.status",
-              "State": "$.state",
-              "Start": "$.startTime",
-              "End": "$.endTime",
-              "Duration(ms)": "$.duration",
-              "Bytes": "$.stats.bytesTransferred",
-              "Error": "$.result.error.reason"
-            }
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Duration" },
+            "properties": [
+              { "id": "unit", "value": "ms" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Bytes" },
+            "properties": [
+              { "id": "unit", "value": "decbytes" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "OK":      { "color": "green", "text": "OK" } } },
+                  { "type": "value", "options": { "FAILED":   { "color": "red",   "text": "FAILED" } } },
+                  { "type": "value", "options": { "ERROR":    { "color": "red",   "text": "ERROR" } } },
+                  { "type": "value", "options": { "WARNING":  { "color": "yellow","text": "WARNING" } } }
+                ]
+              }
+            ]
           }
-        }
-      ]
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          { "displayName": "Start", "desc": true }
+        ]
+      }
     }
   ]
 }
