@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  ppdm-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ppdm-backend
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:3000:3000"
+    environment:
+      - PORT=3000
+      - PPDM_API_URL=https://sesrv206.tre-se.jus.br:8443/api/v2
+      - PPDM_LOGIN=eps4thierry.broucke
+      - PPDM_PASSWORD=tuEs5fYn17-UlvG83rNQ
+      - USE_MOCK_DATA=true
+      - NODE_ENV=production
+    volumes:
+      # Volume para o arquivo de dados mock
+      - ./saida.json:/app/saida.json:ro
+      # Descomentar para desenvolvimento (hot reload)
+      # - ./server.js:/app/server.js
+      # - ./package.json:/app/package.json
+    networks:
+      - ppdm-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  ppdm-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ppdm-frontend
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8787:8080"
+    depends_on:
+      - ppdm-backend
+    networks:
+      - ppdm-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  ppdm-network:
+    driver: bridge

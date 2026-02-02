@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  ppdm-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ppdm-backend-dev
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:3000:3000"
+    environment:
+      - PORT=3000
+      - PPDM_API_URL=https://sesrv206.tre-se.jus.br:8443/api/v2
+      - PPDM_LOGIN=eps4thierry.broucke
+      - PPDM_PASSWORD=tuEs5fYn17-UlvG83rNQ
+      - USE_MOCK_DATA=true
+      - NODE_ENV=development
+    volumes:
+      # Volumes para desenvolvimento com hot reload
+      - ./server.js:/app/server.js
+      - ./package.json:/app/package.json
+      - ./saida.json:/app/saida.json:ro
+      - /app/node_modules
+    networks:
+      - ppdm-network
+    command: npm run dev
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  ppdm-frontend-dev:
+    image: node:20-alpine
+    container_name: ppdm-frontend-dev
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "0.0.0.0:8080:8080"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - ppdm-backend
+    networks:
+      - ppdm-network
+    environment:
+      - VITE_API_URL=http://ppdm-backend:3000
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  ppdm-network:
+    driver: bridge
