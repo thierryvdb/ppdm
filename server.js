@@ -123,7 +123,7 @@ async function fetchActivities() {
   }
 }
 
-// Rota para obter as atividades
+// Rota para obter as atividades originais (mantida para front-end Vue)
 app.get('/ppdm-activities', (req, res) => {
   if (!activitiesData) {
     return res.status(503).json({
@@ -134,6 +134,127 @@ app.get('/ppdm-activities', (req, res) => {
 
   res.json(activitiesData);
 });
+
+// Rotas exigidas pelo plugin JSON Fetcher (nagasudhirpulla)
+app.get('/', (_req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'PPDM JSON Fetcher health check',
+    hasActivitiesData: !!activitiesData
+  });
+});
+
+app.post('/', (req, res) => {
+  if (!activitiesData) {
+    return res.status(503).json({
+      error: 'Dados ainda não disponíveis',
+      message: 'Aguarde a primeira sincronização com a API'
+    });
+  }
+
+  const timeRange = extractTimeRange(req.body);
+  const payloadFilters = extractPayloadFilters(req.body);
+  const frames = buildGrafanaFrames(activitiesData.content, timeRange, payloadFilters);
+
+  res.json({ frames });
+});
+
+function extractTimeRange(body) {
+  const range = body?.TimeRange ?? body?.timeRange;
+  if (range && range.From && range.To) {
+    const from = Date.parse(range.From);
+    const to = Date.parse(range.To);
+    if (!Number.isNaN(from) && !Number.isNaN(to)) {
+      return { from, to };
+    }
+  }
+
+  if (body?.from && body?.to) {
+    const from = Number(body.from);
+    const to = Number(body.to);
+    if (!Number.isNaN(from) && !Number.isNaN(to)) {
+      return { from, to };
+    }
+  }
+
+  return null;
+}
+
+function extractPayloadFilters(body) {
+  const rawPayload =
+    body?.payload ??
+    body?.JSON?.payload ??
+    body?.json?.payload ??
+    body?.JSON?.jsonPayload;
+
+  if (!rawPayload) {
+    return {};
+  }
+
+  try {
+    return typeof rawPayload === 'string'
+      ? JSON.parse(rawPayload)
+      : rawPayload;
+  } catch (error) {
+    console.warn('[GRAFANA] Não foi possível parsear o payload do plugin:', error.message);
+    return {};
+  }
+}
+
+function buildGrafanaFrames(activities = [], timeRange, filters = {}) {
+  const filtered = (activities || [])
+    .map((activity) => {
+      const startTime = new Date(activity.startTime).getTime();
+      return { ...activity, __startMs: startTime };
+    })
+    .filter((activity) => {
+      if (!activity.__startMs || Number.isNaN(activity.__startMs)) {
+        return false;
+      }
+
+      if (timeRange) {
+        if (activity.__startMs < timeRange.from || activity.__startMs > timeRange.to) {
+          return false;
+        }
+      }
+
+      if (filters.category && activity.category !== filters.category) {
+        return false;
+      }
+
+      if (filters.asset && activity.asset?.name !== filters.asset) {
+        return false;
+      }
+
+      if (filters.status && activity.result?.status !== filters.status) {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => a.__startMs - b.__startMs);
+
+  const timestampsSeconds = filtered.map((activity) => Math.floor(activity.__startMs / 1000));
+  const bytes = filtered.map((activity) => Number(activity.stats?.bytesTransferred ?? 0));
+  const durationsSeconds = filtered.map((activity) => Math.round((activity.duration ?? 0) / 1000));
+
+  const columns = [];
+  columns.push({ name: 'timestamp', values: timestampsSeconds, labels: null });
+
+  if (durationsSeconds.some((value) => value > 0)) {
+    columns.push({ name: 'durationSeconds', values: durationsSeconds, labels: null });
+  }
+
+  if (bytes.some((value) => value > 0)) {
+    columns.push({ name: 'bytesTransferred', values: bytes, labels: null });
+  }
+
+  return [
+    {
+      columns
+    }
+  ];
+}
 
 // Rota de health check
 app.get('/health', (req, res) => {

@@ -1,0 +1,134 @@
+{
+  "id": null,
+  "uid": "DS-PPDM",
+  "title": "PPDM – Activities & Backup Health",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "1m",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Activities",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "queryType": "json",
+          "rootSelector": "$.content",
+          "fields": [{ "name": "id", "jsonPath": "$.id", "type": "string" }]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["count"] } }
+    },
+    {
+      "type": "stat",
+      "title": "Jobs OK",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "queryType": "json",
+          "rootSelector": "$.content[?(@.result.status=='OK')]",
+          "fields": [{ "name": "id", "jsonPath": "$.id", "type": "string" }]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["count"] } }
+    },
+    {
+      "type": "stat",
+      "title": "Jobs Failed / Error",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "refId": "C",
+          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "queryType": "json",
+          "rootSelector": "$.content[?(@.result.status=='FAILED' || @.result.status=='ERROR')]",
+          "fields": [{ "name": "id", "jsonPath": "$.id", "type": "string" }]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["count"] } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Job Duration (minutes)",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "refId": "D",
+          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "queryType": "json",
+          "rootSelector": "$.content",
+          "timeField": "startTime",
+          "fields": [
+            { "name": "startTime", "jsonPath": "$.startTime", "type": "time" },
+            { "name": "durationMs", "jsonPath": "$.duration", "type": "number" }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "custom": { "transform": "divide", "factor": 60000 }
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Bytes Transferred",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "refId": "E",
+          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "queryType": "json",
+          "rootSelector": "$.content",
+          "timeField": "startTime",
+          "fields": [
+            { "name": "startTime", "jsonPath": "$.startTime", "type": "time" },
+            { "name": "bytesTransferred", "jsonPath": "$.stats.bytesTransferred", "type": "number" }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" }
+      }
+    },
+    {
+      "type": "table",
+      "title": "Activity Details",
+      "gridPos": { "x": 0, "y": 10, "w": 24, "h": 10 },
+      "targets": [
+        {
+          "refId": "F",
+          "datasource": { "type": "grafana-json-datasource", "uid": "DS-PPDM" },
+          "queryType": "json",
+          "rootSelector": "$.content"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "paths": {
+              "Name": "$.name",
+              "Category": "$.category",
+              "Asset": "$.asset.name",
+              "Host": "$.host.name",
+              "Status": "$.result.status",
+              "State": "$.state",
+              "Start": "$.startTime",
+              "End": "$.endTime",
+              "Duration(ms)": "$.duration",
+              "Bytes": "$.stats.bytesTransferred",
+              "Error": "$.result.error.reason"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
