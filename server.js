@@ -292,6 +292,7 @@ app.get('/table/activities', (_req, res) => {
 // ------------------------------------------------------------------
 
 // Lista de atividades únicas (para dropdown/variável do Grafana)
+// Retorna formato compatível com variáveis do Grafana: array de objetos com __text e __value
 app.get('/activities/list', (_req, res) => {
   if (!activitiesData || !activitiesData.content) {
     return res.status(503).json([]);
@@ -302,7 +303,8 @@ app.get('/activities/list', (_req, res) => {
       .map(a => a.name)
       .filter(Boolean)
   )].sort();
-  res.json(names.map(name => ({ name })));
+  // Formato para variáveis do Grafana
+  res.json(names.map(name => ({ __text: name, __value: name, name })));
 });
 
 // Estatísticas filtradas por nome da atividade
