@@ -1,7 +1,7 @@
 {
   "id": null,
   "uid": "ppdm-activities",
-  "title": "PPDM - Atividades e Saúde dos Backups",
+  "title": "PPDM - Activities & Backup Health",
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
@@ -11,7 +11,7 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "Total de Atividades",
+      "title": "Total Activities",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
       "datasource": {
         "uid": "${DS_JSON}",
@@ -115,7 +115,7 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Jobs com Falha / Erro",
+      "title": "Jobs Failed / Error",
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
       "datasource": {
         "uid": "${DS_JSON}",
@@ -167,7 +167,7 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Jobs com Alerta",
+      "title": "Jobs Warning",
       "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
       "datasource": {
         "uid": "${DS_JSON}",
@@ -219,7 +219,7 @@
     {
       "id": 5,
       "type": "timeseries",
-      "title": "Duração dos Jobs",
+      "title": "Job Duration",
       "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
       "datasource": {
         "uid": "${DS_JSON}",
@@ -245,7 +245,7 @@
             {
               "jsonPath": "$[*].duration",
               "type": "number",
-              "name": "Duração (min)"
+              "name": "duration"
             }
           ]
         }
@@ -257,12 +257,11 @@
       "fieldConfig": {
         "defaults": {
           "unit": "m",
-          "displayName": "Duração (min)",
           "color": { "mode": "palette-classic" },
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Minutos",
+            "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -285,7 +284,7 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Bytes Transferidos",
+      "title": "Bytes Transferred",
       "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
       "datasource": {
         "uid": "${DS_JSON}",
@@ -311,7 +310,7 @@
             {
               "jsonPath": "$[*].bytes",
               "type": "number",
-              "name": "Bytes"
+              "name": "bytes"
             }
           ]
         }
@@ -323,12 +322,11 @@
       "fieldConfig": {
         "defaults": {
           "unit": "decbytes",
-          "displayName": "Bytes Transferidos",
           "color": { "mode": "palette-classic" },
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Tamanho",
+            "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -351,7 +349,7 @@
     {
       "id": 7,
       "type": "table",
-      "title": "Detalhes das Atividades",
+      "title": "Activity Details",
       "gridPos": { "x": 0, "y": 12, "w": 24, "h": 10 },
       "datasource": {
         "uid": "${DS_JSON}",
@@ -372,12 +370,12 @@
             {
               "jsonPath": "$[*].name",
               "type": "string",
-              "name": "Nome"
+              "name": "Name"
             },
             {
               "jsonPath": "$[*].category",
               "type": "string",
-              "name": "Categoria"
+              "name": "Category"
             },
             {
               "jsonPath": "$[*].status",
@@ -387,22 +385,22 @@
             {
               "jsonPath": "$[*].state",
               "type": "string",
-              "name": "Estado"
+              "name": "State"
             },
             {
               "jsonPath": "$[*].start",
               "type": "time",
-              "name": "Início"
+              "name": "Start"
             },
             {
               "jsonPath": "$[*].end",
               "type": "time",
-              "name": "Fim"
+              "name": "End"
             },
             {
               "jsonPath": "$[*].duration",
               "type": "number",
-              "name": "Duração"
+              "name": "Duration"
             },
             {
               "jsonPath": "$[*].bytes",
@@ -425,7 +423,7 @@
         "defaults": {},
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Duração" },
+            "matcher": { "id": "byName", "options": "Duration" },
             "properties": [{ "id": "unit", "value": "ms" }]
           },
           {
