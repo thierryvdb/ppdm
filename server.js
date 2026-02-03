@@ -255,8 +255,9 @@ app.get('/stats/hosts', (_req, res) => {
 function buildHostMetrics(activities = []) {
   const hosts = {};
 
+  const fallbackHostName = 'se1.tre-se.gov.br';
   activities.forEach(activity => {
-    const hostName = activity.host?.name || 'Sem host';
+    const hostName = activity.host?.name || fallbackHostName;
     if (!hosts[hostName]) {
       hosts[hostName] = {
         name: hostName,
