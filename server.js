@@ -233,12 +233,13 @@ app.get('/stats/warning', (_req, res) => {
 // ------------------------------------------------------------------
 
 // Dados para o gráfico de duração (array de objetos com time e duration em minutos)
+// Filtra apenas JOB_GROUP ou jobs sem pai para evitar duplicação
 app.get('/chart/duration', (_req, res) => {
   if (!activitiesData || !activitiesData.content) {
     return res.status(503).json([]);
   }
   const data = activitiesData.content
-    .filter(a => a.startTime && a.duration)
+    .filter(a => a.startTime && a.duration && (a.classType === 'JOB_GROUP' || !a.parentId))
     .map(a => ({
       time: a.startTime,
       duration: Math.round(a.duration / 60000 * 100) / 100 // converte ms para minutos (2 decimais)
@@ -248,12 +249,13 @@ app.get('/chart/duration', (_req, res) => {
 });
 
 // Dados para o gráfico de bytes transferidos
+// Filtra apenas JOB_GROUP ou jobs sem pai para evitar duplicação
 app.get('/chart/bytes', (_req, res) => {
   if (!activitiesData || !activitiesData.content) {
     return res.status(503).json([]);
   }
   const data = activitiesData.content
-    .filter(a => a.startTime && a.stats?.bytesTransferred)
+    .filter(a => a.startTime && a.stats?.bytesTransferred && (a.classType === 'JOB_GROUP' || !a.parentId))
     .map(a => ({
       time: a.startTime,
       bytes: a.stats.bytesTransferred
@@ -263,11 +265,14 @@ app.get('/chart/bytes', (_req, res) => {
 });
 
 // Dados para a tabela de atividades (ordenado por start decrescente - mais recentes primeiro)
+// Filtra apenas JOB_GROUP (atividades pai) para evitar duplicação com jobs filhos
 app.get('/table/activities', (_req, res) => {
   if (!activitiesData || !activitiesData.content) {
     return res.status(503).json([]);
   }
   const data = activitiesData.content
+    // Filtra apenas JOB_GROUP (resumos) ou jobs que não têm pai (atividades independentes)
+    .filter(a => a.classType === 'JOB_GROUP' || !a.parentId)
     .map(a => ({
       name: a.name || '',
       category: a.category || '',
