@@ -20,6 +20,12 @@ app.use((_req, res, next) => {
 });
 app.options('*', (_req, res) => res.sendStatus(200));
 
+// DEBUG: loga TODAS as requests recebidas para diagnosticar o Grafana
+app.use((req, _res, next) => {
+  console.log(`[DEBUG] ${req.method} ${req.url} | Content-Type: ${req.headers['content-type'] || '-'} | Body keys: ${req.body ? Object.keys(req.body).join(',') : '-'}`);
+  next();
+});
+
 // Configuração para aceitar certificados SSL auto-assinados (apenas para desenvolvimento)
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
@@ -164,17 +170,11 @@ app.get('/ppdm-activities', sendActivities);
 // POST /ppdm-activities – usado pelo plugin JSON do Grafana (alguns plugins usam POST)
 app.post('/ppdm-activities', sendActivities);
 
-// GET /  – health-check exigido por vários plugins JSON do Grafana
-app.get('/', (_req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'PPDM JSON Fetcher health check',
-    hasActivitiesData: !!activitiesData
-  });
-});
+// GET / – o plugin marcusolsson-json-datasource faz GET na URL base do datasource.
+//         Se não retornar os dados aqui, o Grafana mostra "No data".
+app.get('/', sendActivities);
 
-// POST / – endpoint principal que o plugin JSON Fetcher do Grafana chama
-//          Retorna JSON raw para que as queries JSONPath ($. content) funcionem
+// POST / – fallback para plugins que usam POST
 app.post('/', sendActivities);
 
 // Rota de health check
