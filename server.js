@@ -58,13 +58,38 @@ let activitiesData = null;
 let authToken = null;
 let tokenExpirationTime = null;
 const FALLBACK_HOST_NAME = 'se1.tre-se.gov.br';
+const RECENT_WINDOW_HOURS = 72;
+const RECENT_PAGE_SIZE = 200;
+const FULL_PAGE_SIZE = 200;
+const SNAPSHOT_FILE_PATH = path.join(__dirname, 'saida.json');
+const SNAPSHOT_HOUR = 23;
+const SNAPSHOT_MINUTE = 59;
 
 function updateCacheMetrics(data) {
   activitiesCountGauge.set(data?.content?.length ?? 0);
 }
 
-// Cache do mock para evitar releitura do disco a cada ciclo
-let mockCache = null;
+let historicalSnapshot = null;
+let recentActivitiesCache = null;
+let diskSnapshotCache = null;
+
+function readSnapshotFromDisk(forceReload = false) {
+  if (diskSnapshotCache && !forceReload) {
+    return diskSnapshotCache;
+  }
+
+  try {
+    const fileContent = fs.readFileSync(SNAPSHOT_FILE_PATH, 'utf8');
+    const parsed = JSON.parse(fileContent);
+    diskSnapshotCache = parsed;
+    console.log(`[SNAPSHOT] saida.json carregado (${parsed.content?.length || 0} itens)`);
+    return parsed;
+  } catch (error) {
+    console.warn(`[SNAPSHOT] Não foi possível ler saida.json: ${error.message}`);
+    diskSnapshotCache = null;
+    return null;
+  }
+}
 
 // Função para autenticar e obter o token
 async function authenticatePPDM(reason = 'inicial') {
@@ -111,73 +136,60 @@ function isTokenValid() {
 
 // Carrega mock uma única vez do disco e guarda em memória
 function loadMockData() {
-  if (!mockCache) {
-    console.log('[FETCH] Lendo saida.json do disco (primeira vez)...');
-    mockCache = JSON.parse(
-      fs.readFileSync(path.join(__dirname, 'saida.json'), 'utf8')
-    );
-    console.log(`[FETCH] ${mockCache.content?.length || 0} atividades carregadas do mock`);
+  const snapshot = readSnapshotFromDisk();
+  if (!snapshot) {
+    console.warn('[FETCH] saida.json não disponível - modo mock ficará sem dados');
+    return null;
   }
-  updateCacheMetrics(mockCache);
-  return mockCache;
+  updateCacheMetrics(snapshot);
+  return snapshot;
 }
 
-// Função para buscar atividades da API PPDM
+// Função para buscar atividades da API PPDM (últimas 72 horas)
 async function fetchActivities() {
   const fetchStart = Date.now();
-  try {
-    // Se estiver em modo mock, usar o arquivo saida.json (cache em memória)
-    if (process.env.USE_MOCK_DATA === 'true') {
-      console.log('[FETCH] Usando dados mock (cache em memória)');
-      activitiesData = loadMockData();
-      const durationSeconds = (Date.now() - fetchStart) / 1000;
-      fetchDurationGauge.set(durationSeconds);
-      fetchSuccessGauge.set(1);
-      return activitiesData;
-    }
+  if (process.env.USE_MOCK_DATA === 'true') {
+    console.log('[FETCH] Usando dados mock (cache em memória)');
+    activitiesData = loadMockData();
+    const durationSeconds = (Date.now() - fetchStart) / 1000;
+    fetchDurationGauge.set(durationSeconds);
+    fetchSuccessGauge.set(activitiesData ? 1 : 0);
+    return activitiesData;
+  }
 
-    // Verificar se o token é válido, senão autenticar novamente (RENOVAÇÃO REATIVA)
-    if (!isTokenValid()) {
-      console.log('[FETCH] Token inválido ou expirado detectado na verificação');
-      await authenticatePPDM('token expirado - renovação reativa');
-    }
+  try {
+    await ensureAuthenticated('busca das últimas 72 horas');
 
     if (!authToken) {
       console.error('[FETCH] Não foi possível obter o token de autenticação');
+      fetchSuccessGauge.set(0);
       return null;
     }
 
-    console.log('[FETCH] Buscando atividades da API PPDM...');
+    console.log(`[FETCH] Solicitando atividades dos últimos ${RECENT_WINDOW_HOURS}h da API PPDM...`);
+    const sinceTimestamp = new Date(Date.now() - RECENT_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
+    const filter = `startTime ge "${sinceTimestamp}"`;
+    const recentContent = await fetchPaginatedActivities({ filter, pageSize: RECENT_PAGE_SIZE });
 
-    const response = await axios.get(
-      `${process.env.PPDM_API_URL}/activities`,
-      {
-        httpsAgent,
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    recentActivitiesCache = {
+      page: {
+        size: recentContent.length,
+        number: 1,
+        totalPages: 1,
+        totalElements: recentContent.length
+      },
+      content: recentContent
+    };
 
-    activitiesData = response.data;
-    updateCacheMetrics(activitiesData);
-    const durationSeconds = (Date.now() - fetchStart) / 1000;
-    fetchDurationGauge.set(durationSeconds);
+    console.log(`[FETCH] ${recentContent.length} registros recentes carregados`);
+    rebuildActivitiesData();
     fetchSuccessGauge.set(1);
-    console.log(`[FETCH] ${response.data.content?.length || 0} atividades carregadas`);
-    return response.data;
+    return activitiesData;
   } catch (error) {
-    const durationSeconds = (Date.now() - fetchStart) / 1000;
-    fetchDurationGauge.set(durationSeconds);
-    fetchSuccessGauge.set(0);
-    console.error('[FETCH] Erro ao buscar atividades:', error.message);
-    updateCacheMetrics(activitiesData);
+    console.error('[FETCH] Erro ao buscar atividades recentes:', error.message);
     if (error.response) {
       console.error('[FETCH] Status:', error.response.status);
       console.error('[FETCH] Dados:', error.response.data);
-
-      // Se for erro 401, tentar autenticar novamente (RENOVAÇÃO REATIVA)
       if (error.response.status === 401) {
         console.log('[FETCH] Token expirado (erro 401 da API)');
         authToken = null;
@@ -185,8 +197,156 @@ async function fetchActivities() {
         await authenticatePPDM('erro 401 - renovação reativa');
       }
     }
+    fetchSuccessGauge.set(0);
     return null;
+  } finally {
+    const durationSeconds = (Date.now() - fetchStart) / 1000;
+    fetchDurationGauge.set(durationSeconds);
   }
+}
+
+function mergeActivities(historical = [], recent = []) {
+  const map = new Map();
+  historical.forEach(activity => {
+    if (activity?.id) {
+      map.set(activity.id, activity);
+    }
+  });
+  recent.forEach(activity => {
+    if (activity?.id) {
+      map.set(activity.id, activity);
+    }
+  });
+
+  return Array.from(map.values())
+    .sort((a, b) => {
+      const aTime = new Date(a.endTime || a.startTime).getTime() || 0;
+      const bTime = new Date(b.endTime || b.startTime).getTime() || 0;
+      return bTime - aTime;
+    });
+}
+
+function rebuildActivitiesData() {
+  const recent = recentActivitiesCache?.content ?? [];
+  const historical = historicalSnapshot?.content ?? [];
+  const merged = mergeActivities(historical, recent);
+  activitiesData = {
+    page: {
+      size: merged.length,
+      number: 1,
+      totalPages: 1,
+      totalElements: merged.length
+    },
+    content: merged,
+    _links: {
+      self: { href: `${process.env.PPDM_API_URL}/activities` }
+    }
+  };
+  updateCacheMetrics(activitiesData);
+}
+
+async function ensureAuthenticated(reason) {
+  if (!isTokenValid()) {
+    console.log(`[AUTH] Token inválido antes de ${reason}`);
+    await authenticatePPDM(reason);
+  }
+}
+
+async function fetchPaginatedActivities({ filter = '', pageSize = RECENT_PAGE_SIZE } = {}) {
+  const accumulated = [];
+  let currentPage = 1;
+  let totalPages = 1;
+  const params = new URLSearchParams();
+  params.set('pageSize', String(pageSize));
+  if (filter) {
+    params.set('filter', filter);
+  }
+
+  do {
+    params.set('page', String(currentPage));
+    const url = `${process.env.PPDM_API_URL}/activities?${params.toString()}`;
+    const response = await axios.get(url, {
+      httpsAgent,
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = response.data || {};
+    const pageContent = Array.isArray(data.content) ? data.content : [];
+    accumulated.push(...pageContent);
+    totalPages = data.page?.totalPages ?? currentPage;
+    console.log(`[FETCH] Página ${currentPage}/${totalPages} carregada (${pageContent.length} registros)`);
+    currentPage += 1;
+  } while (currentPage <= totalPages);
+
+  return accumulated;
+}
+
+async function downloadFullActivitiesSnapshot() {
+  if (process.env.USE_MOCK_DATA === 'true') {
+    console.log('[SNAPSHOT] Modo mock ativo; download completo não será executado');
+    return;
+  }
+
+  try {
+    await ensureAuthenticated('snapshot diário completo');
+    console.log('[SNAPSHOT] Iniciando download completo das atividades (paginação)...');
+    const allContent = await fetchPaginatedActivities({ pageSize: FULL_PAGE_SIZE });
+    const snapshotPayload = {
+      page: {
+        size: allContent.length,
+        number: 1,
+        totalPages: 1,
+        totalElements: allContent.length
+      },
+      content: allContent,
+      _links: {
+        self: { href: `${process.env.PPDM_API_URL}/activities` }
+      }
+    };
+    fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(snapshotPayload, null, 2), 'utf8');
+    diskSnapshotCache = snapshotPayload;
+    historicalSnapshot = snapshotPayload;
+    console.log(`[SNAPSHOT] Download completo salvo em saida.json (${allContent.length} registros)`);
+    rebuildActivitiesData();
+  } catch (error) {
+    console.error('[SNAPSHOT] Erro ao baixar snapshot completo:', error.message);
+    if (error.response) {
+      console.error('[SNAPSHOT] Status:', error.response.status);
+      console.error('[SNAPSHOT] Dados:', error.response.data);
+    }
+  }
+}
+
+function getNextSnapshotTime(hour = SNAPSHOT_HOUR, minute = SNAPSHOT_MINUTE) {
+  const next = new Date();
+  next.setHours(hour, minute, 0, 0);
+  if (next <= Date.now()) {
+    next.setDate(next.getDate() + 1);
+  }
+  return next;
+}
+
+function startDailySnapshotService() {
+  if (process.env.USE_MOCK_DATA === 'true') {
+    console.log('[SNAPSHOT] Modo mock ativo; job diário desabilitado');
+    return;
+  }
+
+  const nextRun = getNextSnapshotTime();
+  const delay = nextRun.getTime() - Date.now();
+  console.log(`[SNAPSHOT] Próximo download completo agendado para ${nextRun.toISOString()}`);
+  setTimeout(async () => {
+    try {
+      console.log('[SNAPSHOT] Executando captura completa diária...');
+      await downloadFullActivitiesSnapshot();
+    } catch (error) {
+      console.error('[SNAPSHOT] Ocorreu um erro na captura diária:', error.message);
+    } finally {
+      startDailySnapshotService();
+    }
+  }, delay);
 }
 
 // Resposta padrão para endpoints de dados – retorna o JSON raw das atividades
@@ -545,8 +705,8 @@ app.get('/metrics', async (_req, res) => {
 });
 
 // Função para renovar o token proativamente
-async function startTokenRefreshService() {
-  if (process.env.USE_MOCK_DATA !== 'true') {
+  async function startTokenRefreshService() {
+    if (process.env.USE_MOCK_DATA !== 'true') {
     // Renovar token a cada 55 minutos (antes de expirar em 1 hora) - RENOVAÇÃO PROATIVA
     setInterval(async () => {
       console.log('[TOKEN-REFRESH] Renovando token proativamente (timer 55 min)...');
@@ -558,6 +718,14 @@ async function startTokenRefreshService() {
   } else {
     console.log('[TOKEN-REFRESH] Renovação de token desabilitada (modo mock)');
   }
+}
+
+// Restaurar dados em memória a partir do último snapshot disponível
+if (process.env.USE_MOCK_DATA === 'true') {
+  activitiesData = loadMockData();
+} else {
+  historicalSnapshot = readSnapshotFromDisk();
+  rebuildActivitiesData();
 }
 
 // Função para iniciar o serviço de sincronização
@@ -594,6 +762,9 @@ app.listen(PORT, '0.0.0.0', async () => {
 
   // Iniciar serviço de renovação de token
   await startTokenRefreshService();
+
+  // Agendar download completo diário
+  startDailySnapshotService();
 });
 
 // Tratamento de erros não capturados
