@@ -228,6 +228,58 @@ app.get('/stats/warning', (_req, res) => {
   res.json({ count });
 });
 
+// ------------------------------------------------------------------
+// Endpoints para gráficos e tabela do Grafana (arrays simples)
+// ------------------------------------------------------------------
+
+// Dados para o gráfico de duração (array de objetos com time e duration)
+app.get('/chart/duration', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json([]);
+  }
+  const data = activitiesData.content
+    .filter(a => a.startTime && a.duration)
+    .map(a => ({
+      time: a.startTime,
+      duration: a.duration
+    }))
+    .sort((a, b) => new Date(a.time) - new Date(b.time));
+  res.json(data);
+});
+
+// Dados para o gráfico de bytes transferidos
+app.get('/chart/bytes', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json([]);
+  }
+  const data = activitiesData.content
+    .filter(a => a.startTime && a.stats?.bytesTransferred)
+    .map(a => ({
+      time: a.startTime,
+      bytes: a.stats.bytesTransferred
+    }))
+    .sort((a, b) => new Date(a.time) - new Date(b.time));
+  res.json(data);
+});
+
+// Dados para a tabela de atividades
+app.get('/table/activities', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json([]);
+  }
+  const data = activitiesData.content.map(a => ({
+    name: a.name || '',
+    category: a.category || '',
+    status: a.result?.status || '',
+    state: a.state || '',
+    start: a.startTime || '',
+    end: a.endTime || '',
+    duration: a.duration || 0,
+    bytes: a.stats?.bytesTransferred || 0
+  }));
+  res.json(data);
+});
+
 // Rota de health check
 app.get('/health', (_req, res) => {
   const tokenInfo = tokenExpirationTime ? {

@@ -235,15 +235,15 @@
           "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/chart/duration",
           "fields": [
             {
-              "jsonPath": "$.content[*].startTime",
+              "jsonPath": "$[*].time",
               "type": "time",
               "name": "time"
             },
             {
-              "jsonPath": "$.content[*].duration",
+              "jsonPath": "$[*].duration",
               "type": "number",
               "name": "duration"
             }
@@ -300,15 +300,15 @@
           "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/chart/bytes",
           "fields": [
             {
-              "jsonPath": "$.content[*].startTime",
+              "jsonPath": "$[*].time",
               "type": "time",
               "name": "time"
             },
             {
-              "jsonPath": "$.content[*].stats.bytesTransferred",
+              "jsonPath": "$[*].bytes",
               "type": "number",
               "name": "bytes"
             }
@@ -365,45 +365,45 @@
           "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/table/activities",
           "fields": [
             {
-              "jsonPath": "$.content[*].name",
+              "jsonPath": "$[*].name",
               "type": "string",
               "name": "Name"
             },
             {
-              "jsonPath": "$.content[*].category",
+              "jsonPath": "$[*].category",
               "type": "string",
               "name": "Category"
             },
             {
-              "jsonPath": "$.content[*].result.status",
+              "jsonPath": "$[*].status",
               "type": "string",
               "name": "Status"
             },
             {
-              "jsonPath": "$.content[*].state",
+              "jsonPath": "$[*].state",
               "type": "string",
               "name": "State"
             },
             {
-              "jsonPath": "$.content[*].startTime",
+              "jsonPath": "$[*].start",
               "type": "time",
               "name": "Start"
             },
             {
-              "jsonPath": "$.content[*].endTime",
+              "jsonPath": "$[*].end",
               "type": "time",
               "name": "End"
             },
             {
-              "jsonPath": "$.content[*].duration",
+              "jsonPath": "$[*].duration",
               "type": "number",
               "name": "Duration"
             },
             {
-              "jsonPath": "$.content[*].stats.bytesTransferred",
+              "jsonPath": "$[*].bytes",
               "type": "number",
               "name": "Bytes"
             }
@@ -453,7 +453,7 @@
     {
       "name": "DS_JSON",
       "label": "JSON Datasource",
-      "description": "Datasource marcusolsson-json-datasource apontando para http://<ip>:3000 (SEM /ppdm-activities no final)",
+      "description": "Datasource marcusolsson-json-datasource apontando para http://<ip>:3000",
       "type": "datasource",
       "pluginId": "marcusolsson-json-datasource",
       "pluginName": "JSON API"
