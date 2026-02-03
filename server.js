@@ -242,6 +242,62 @@ app.get('/stats/summary', (_req, res) => {
   });
 });
 
+// Endpoint com métricas por host para dashboards de hosts
+app.get('/stats/hosts', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json({ error: 'Dados ainda não disponíveis' });
+  }
+
+  const hostMetrics = buildHostMetrics(activitiesData.content);
+  res.json({ hosts: hostMetrics });
+});
+
+function buildHostMetrics(activities = []) {
+  const hosts = {};
+
+  activities.forEach(activity => {
+    const hostName = activity.host?.name || 'Sem host';
+    if (!hosts[hostName]) {
+      hosts[hostName] = {
+        name: hostName,
+        total: 0,
+        success: 0,
+        durationSum: 0,
+        bytesSum: 0,
+        lastStatus: activity.result?.status || 'UNKNOWN',
+        lastRun: activity.endTime || activity.startTime || null
+      };
+    }
+
+    const host = hosts[hostName];
+    host.total += 1;
+    if (activity.result?.status === 'OK') {
+      host.success += 1;
+    }
+    host.durationSum += activity.duration ?? 0;
+    host.bytesSum += Number(activity.stats?.bytesTransferred ?? 0);
+
+    const activityTime = new Date(activity.endTime || activity.startTime).getTime() || 0;
+    const currentLastTime = host.lastRun ? new Date(host.lastRun).getTime() : 0;
+    if (activityTime > currentLastTime) {
+      host.lastStatus = activity.result?.status || host.lastStatus;
+      host.lastRun = activity.endTime || activity.startTime;
+    }
+  });
+
+  return Object.values(hosts)
+    .map(host => ({
+      name: host.name,
+      totalExecutions: host.total,
+      successRate: host.total ? (host.success / host.total) * 100 : 0,
+      averageDurationMs: host.total ? host.durationSum / host.total : 0,
+      totalBytes: host.bytesSum,
+      lastStatus: host.lastStatus,
+      lastRun: host.lastRun
+    }))
+    .sort((a, b) => b.totalExecutions - a.totalExecutions);
+}
+
 // Endpoint para contagem de jobs Warning
 app.get('/stats/warning', (_req, res) => {
   if (!activitiesData || !activitiesData.content) {

@@ -1,0 +1,236 @@
+{
+  "id": null,
+  "uid": "ppdm-hosts",
+  "title": "PPDM – Hosts Overview",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "editable": true,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Hosts monitorados",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "/stats/summary",
+          "fields": [
+            {
+              "jsonPath": "$.hostCount",
+              "type": "number",
+              "name": "hostCount"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "last"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#2563eb"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#2563eb"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Hosts e métricas detalhadas",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 12 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "/stats/hosts",
+          "fields": [
+            {
+              "jsonPath": "$.hosts[*].name",
+              "type": "string",
+              "name": "Nome"
+            },
+            {
+              "jsonPath": "$.hosts[*].lastStatus",
+              "type": "string",
+              "name": "Status"
+            },
+            {
+              "jsonPath": "$.hosts[*].successRate",
+              "type": "number",
+              "name": "Taxa de sucesso"
+            },
+            {
+              "jsonPath": "$.hosts[*].averageDurationMs",
+              "type": "number",
+              "name": "Duração média (min)",
+              "custom": {
+                "transform": "divide",
+                "factor": 60000
+              }
+            },
+            {
+              "jsonPath": "$.hosts[*].totalBytes",
+              "type": "number",
+              "name": "Dados transferidos"
+            },
+            {
+              "jsonPath": "$.hosts[*].lastRun",
+              "type": "time",
+              "name": "Última execução"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Taxa de sucesso"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.displayName",
+                "value": "Taxa de sucesso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Duração média (min)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "min"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Dados transferidos"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "__inputs": [
+    {
+      "name": "DS_JSON",
+      "label": "JSON Datasource",
+      "description": "JSON API / Marcus Olsson pointing to http://<backend>:3000",
+      "type": "datasource",
+      "pluginId": "marcusolsson-json-datasource",
+      "pluginName": "JSON API"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "marcusolsson-json-datasource",
+      "name": "JSON API",
+      "version": "1.3.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ]
+}
