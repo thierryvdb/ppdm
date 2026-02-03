@@ -1,0 +1,625 @@
+{
+  "id": null,
+  "uid": "ppdm-individual",
+  "title": "PPDM - Atividade Individual",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "editable": true,
+  "templating": {
+    "list": [
+      {
+        "name": "atividade",
+        "label": "Atividade",
+        "type": "query",
+        "datasource": {
+          "uid": "${DS_JSON}",
+          "type": "marcusolsson-json-datasource"
+        },
+        "query": {
+          "urlPath": "/activities/list",
+          "fields": [
+            {
+              "jsonPath": "$[*].name",
+              "type": "string"
+            }
+          ]
+        },
+        "refresh": 1,
+        "sort": 1,
+        "current": {
+          "text": "Protecting Oracle Databases - TRE_ORA_RMAN_ADM_SE1 - PROTECTION - Cumulative",
+          "value": "Protecting Oracle Databases - TRE_ORA_RMAN_ADM_SE1 - PROTECTION - Cumulative"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total de Execuções",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "name=${atividade}",
+          "urlPath": "/activity/stats",
+          "fields": [
+            {
+              "jsonPath": "$.total",
+              "type": "number",
+              "name": "total"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["last"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "blue" }]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Execuções OK",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "name=${atividade}",
+          "urlPath": "/activity/stats",
+          "fields": [
+            {
+              "jsonPath": "$.ok",
+              "type": "number",
+              "name": "ok"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["last"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "green" }]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Falhas / Erros",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "name=${atividade}",
+          "urlPath": "/activity/stats",
+          "fields": [
+            {
+              "jsonPath": "$.failed",
+              "type": "number",
+              "name": "failed"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["last"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "red" }]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Alertas",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "name=${atividade}",
+          "urlPath": "/activity/stats",
+          "fields": [
+            {
+              "jsonPath": "$.warning",
+              "type": "number",
+              "name": "warning"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["last"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "yellow" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "yellow" }]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Duração Média",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "name=${atividade}",
+          "urlPath": "/activity/stats",
+          "fields": [
+            {
+              "jsonPath": "$.avgDuration",
+              "type": "number",
+              "name": "avgDuration"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["last"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "color": { "mode": "fixed", "fixedColor": "purple" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "purple" }]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Último Status",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "name=${atividade}",
+          "urlPath": "/activity/stats",
+          "fields": [
+            {
+              "jsonPath": "$.lastStatus",
+              "type": "string",
+              "name": "lastStatus"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["last"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "OK": { "color": "green", "index": 0, "text": "OK" } } },
+            { "type": "value", "options": { "FAILED": { "color": "red", "index": 1, "text": "FALHA" } } },
+            { "type": "value", "options": { "ERROR": { "color": "red", "index": 2, "text": "ERRO" } } },
+            { "type": "value", "options": { "WARNING": { "color": "yellow", "index": 3, "text": "ALERTA" } } },
+            { "type": "value", "options": { "RUNNING": { "color": "blue", "index": 4, "text": "EXECUTANDO" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "text" }]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Histórico de Duração",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "name=${atividade}",
+          "urlPath": "/activity/duration",
+          "fields": [
+            {
+              "jsonPath": "$[*].time",
+              "type": "time",
+              "name": "time"
+            },
+            {
+              "jsonPath": "$[*].duration",
+              "type": "number",
+              "name": "Duração (min)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "tooltip": { "mode": "single", "sort": "none" },
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "displayName": "Duração (min)",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Minutos",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Histórico de Bytes Transferidos",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "name=${atividade}",
+          "urlPath": "/activity/bytes",
+          "fields": [
+            {
+              "jsonPath": "$[*].time",
+              "type": "time",
+              "name": "time"
+            },
+            {
+              "jsonPath": "$[*].bytes",
+              "type": "number",
+              "name": "Bytes"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "tooltip": { "mode": "single", "sort": "none" },
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decbytes",
+          "displayName": "Bytes Transferidos",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Tamanho",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Histórico de Execuções",
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 10 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 60,
+          "method": "GET",
+          "queryParams": "name=${atividade}",
+          "urlPath": "/activity/executions",
+          "fields": [
+            {
+              "jsonPath": "$[*].status",
+              "type": "string",
+              "name": "Status"
+            },
+            {
+              "jsonPath": "$[*].state",
+              "type": "string",
+              "name": "Estado"
+            },
+            {
+              "jsonPath": "$[*].start",
+              "type": "time",
+              "name": "Início"
+            },
+            {
+              "jsonPath": "$[*].end",
+              "type": "time",
+              "name": "Fim"
+            },
+            {
+              "jsonPath": "$[*].duration",
+              "type": "number",
+              "name": "Duração"
+            },
+            {
+              "jsonPath": "$[*].bytes",
+              "type": "number",
+              "name": "Bytes"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Duração" },
+            "properties": [{ "id": "unit", "value": "ms" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Bytes" },
+            "properties": [{ "id": "unit", "value": "decbytes" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "OK": { "color": "green", "index": 0 } } },
+                  { "type": "value", "options": { "FAILED": { "color": "red", "index": 1 } } },
+                  { "type": "value", "options": { "ERROR": { "color": "red", "index": 2 } } },
+                  { "type": "value", "options": { "WARNING": { "color": "yellow", "index": 3 } } }
+                ]
+              },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "__inputs": [
+    {
+      "name": "DS_JSON",
+      "label": "JSON Datasource",
+      "description": "Datasource marcusolsson-json-datasource apontando para http://<ip>:3000",
+      "type": "datasource",
+      "pluginId": "marcusolsson-json-datasource",
+      "pluginName": "JSON API"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "marcusolsson-json-datasource",
+      "name": "JSON API",
+      "version": "1.3.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ]
+}

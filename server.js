@@ -287,6 +287,117 @@ app.get('/table/activities', (_req, res) => {
   res.json(data);
 });
 
+// ------------------------------------------------------------------
+// Endpoints para Dashboard Individual (filtrado por nome da atividade)
+// ------------------------------------------------------------------
+
+// Lista de atividades únicas (para dropdown/variável do Grafana)
+app.get('/activities/list', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json([]);
+  }
+  const names = [...new Set(
+    activitiesData.content
+      .filter(a => a.classType === 'JOB_GROUP' || !a.parentId)
+      .map(a => a.name)
+      .filter(Boolean)
+  )].sort();
+  res.json(names.map(name => ({ name })));
+});
+
+// Estatísticas filtradas por nome da atividade
+app.get('/activity/stats', (req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json({ error: 'Dados ainda não disponíveis' });
+  }
+
+  const activityName = req.query.name || '';
+  const content = activitiesData.content.filter(a =>
+    (a.classType === 'JOB_GROUP' || !a.parentId) &&
+    a.name === activityName
+  );
+
+  const stats = {
+    total: content.length,
+    ok: content.filter(a => a.result?.status === 'OK').length,
+    failed: content.filter(a => a.result?.status === 'FAILED' || a.result?.status === 'ERROR').length,
+    warning: content.filter(a => a.result?.status === 'WARNING').length,
+    running: content.filter(a => a.result?.status === 'RUNNING').length,
+    avgDuration: content.length > 0
+      ? Math.round(content.reduce((sum, a) => sum + (a.duration || 0), 0) / content.length / 60000 * 100) / 100
+      : 0,
+    totalBytes: content.reduce((sum, a) => sum + (a.stats?.bytesTransferred || 0), 0),
+    lastStatus: content.length > 0 ? content.sort((a, b) => new Date(b.startTime) - new Date(a.startTime))[0]?.result?.status || '' : ''
+  };
+
+  res.json(stats);
+});
+
+// Histórico de duração filtrado por nome da atividade
+app.get('/activity/duration', (req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json([]);
+  }
+
+  const activityName = req.query.name || '';
+  const data = activitiesData.content
+    .filter(a =>
+      a.startTime &&
+      a.duration &&
+      (a.classType === 'JOB_GROUP' || !a.parentId) &&
+      a.name === activityName
+    )
+    .map(a => ({
+      time: a.startTime,
+      duration: Math.round(a.duration / 60000 * 100) / 100
+    }))
+    .sort((a, b) => new Date(a.time) - new Date(b.time));
+  res.json(data);
+});
+
+// Histórico de bytes filtrado por nome da atividade
+app.get('/activity/bytes', (req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json([]);
+  }
+
+  const activityName = req.query.name || '';
+  const data = activitiesData.content
+    .filter(a =>
+      a.startTime &&
+      a.stats?.bytesTransferred &&
+      (a.classType === 'JOB_GROUP' || !a.parentId) &&
+      a.name === activityName
+    )
+    .map(a => ({
+      time: a.startTime,
+      bytes: a.stats.bytesTransferred
+    }))
+    .sort((a, b) => new Date(a.time) - new Date(b.time));
+  res.json(data);
+});
+
+// Tabela de execuções filtrada por nome da atividade
+app.get('/activity/executions', (req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json([]);
+  }
+
+  const activityName = req.query.name || '';
+  const data = activitiesData.content
+    .filter(a => (a.classType === 'JOB_GROUP' || !a.parentId) && a.name === activityName)
+    .map(a => ({
+      status: a.result?.status || '',
+      state: a.state || '',
+      start: a.startTime || '',
+      end: a.endTime || '',
+      duration: a.duration || 0,
+      bytes: a.stats?.bytesTransferred || 0
+    }))
+    .sort((a, b) => new Date(b.start) - new Date(a.start));
+  res.json(data);
+});
+
 // Rota de health check
 app.get('/health', (_req, res) => {
   const tokenInfo = tokenExpirationTime ? {
