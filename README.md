@@ -4,8 +4,20 @@ Sistema completo para integração e monitoramento do PowerProtect Data Manager 
 
 ## Componentes
 
-- **Backend (Node.js)**: API REST com autenticação e sincronização automática
+- **Backend (Node.js)**: API REST com autenticação, deduplicação e sincronização automática (últimas 72h + histórico diário)
 - **Frontend (Vue.js)**: Dashboard interativo com gráficos e alertas
+
+## Novidades/Reforços
+
+- O backend agora baixa e armazena um snapshot completo diário (`saida.json`) às 23:59 para compor o histórico completo. Durante o dia, ele consulta apenas as últimas 72 horas na API real, deduplicando pelo `id` e fundindo os dados com o snapshot em memória.
+- Os endpoints `/metrics` (para o Prometheus) e `/` (para o plugin JSON API do Grafana) foram mantidos e continuam expostos: `/metrics` entrega as métricas `prom-client` e `/` (além de `/ppdm-activities`) devolve os dados combinados usados pelo dashboard e pelos painéis JSON.
+- A arquitetura agora diferencia explicitamente três camadas dentro do backend: i) autenticação/renovação de token (proativa + reativa), ii) captura incremental das últimas 72h, iii) ingestão diária completa em disco (com paginação) seguida de deduplicação para os consumidores.
+
+## Arquitetura e fluxo de dados
+
+- **Fluxo de ingestão**: na inicialização o backend carrega o último `saida.json` do disco (snapshot completo). Em seguida agenda a captura das últimas 72h via API, deduplicando pelo `id` ao unir esse lote recente com o histórico em memória. A cada 23:59 um job paginado baixa tudo novamente e sobrescreve `saida.json`, mantendo o histórico pronto para fusão.
+- **Camadas do backend**: o scheduler de token (`authenticatePPDM`, timer de 55min e tratamento de 401) garante acesso, a função `fetchActivities` trabalha apenas com os registros recentes (com filtro `startTime ge ...`), e o `rebuildActivitiesData` consolida tudo antes das rotas.
+- **Rotas expostas**: `/ppdm-activities` (GET/POST) e `/` continuam retornando o JSON combinado para o dashboard JSON do Grafana; `/metrics` exporta os gauges de `prom-client` (duração, sucesso e total cacheado); `/health` mostra estado das caches/token.
 
 ## Início Rápido
 
