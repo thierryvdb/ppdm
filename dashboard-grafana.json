@@ -24,15 +24,15 @@
             "uid": "${DS_JSON}",
             "type": "marcusolsson-json-datasource"
           },
-          "cacheDurationSeconds": 300,
+          "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/stats",
           "fields": [
             {
-              "jsonPath": "$.content[*].id",
-              "type": "string",
-              "name": "id"
+              "jsonPath": "$.total",
+              "type": "number",
+              "name": "total"
             }
           ]
         }
@@ -40,7 +40,7 @@
       "options": {
         "reduceOptions": {
           "values": false,
-          "calcs": ["count"],
+          "calcs": ["last"],
           "fields": ""
         },
         "orientation": "auto",
@@ -76,15 +76,15 @@
             "uid": "${DS_JSON}",
             "type": "marcusolsson-json-datasource"
           },
-          "cacheDurationSeconds": 300,
+          "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/stats",
           "fields": [
             {
-              "jsonPath": "$.content[?(@.result.status=='OK')].id",
-              "type": "string",
-              "name": "id"
+              "jsonPath": "$.ok",
+              "type": "number",
+              "name": "ok"
             }
           ]
         }
@@ -92,7 +92,7 @@
       "options": {
         "reduceOptions": {
           "values": false,
-          "calcs": ["count"],
+          "calcs": ["last"],
           "fields": ""
         },
         "orientation": "auto",
@@ -128,15 +128,15 @@
             "uid": "${DS_JSON}",
             "type": "marcusolsson-json-datasource"
           },
-          "cacheDurationSeconds": 300,
+          "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/stats",
           "fields": [
             {
-              "jsonPath": "$.content[?(@.result.status=='FAILED' || @.result.status=='ERROR')].id",
-              "type": "string",
-              "name": "id"
+              "jsonPath": "$.failed",
+              "type": "number",
+              "name": "failed"
             }
           ]
         }
@@ -144,7 +144,7 @@
       "options": {
         "reduceOptions": {
           "values": false,
-          "calcs": ["count"],
+          "calcs": ["last"],
           "fields": ""
         },
         "orientation": "auto",
@@ -180,15 +180,15 @@
             "uid": "${DS_JSON}",
             "type": "marcusolsson-json-datasource"
           },
-          "cacheDurationSeconds": 300,
+          "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/stats",
           "fields": [
             {
-              "jsonPath": "$.content[?(@.result.status=='WARNING')].id",
-              "type": "string",
-              "name": "id"
+              "jsonPath": "$.warning",
+              "type": "number",
+              "name": "warning"
             }
           ]
         }
@@ -196,7 +196,7 @@
       "options": {
         "reduceOptions": {
           "values": false,
-          "calcs": ["count"],
+          "calcs": ["last"],
           "fields": ""
         },
         "orientation": "auto",
@@ -232,10 +232,10 @@
             "uid": "${DS_JSON}",
             "type": "marcusolsson-json-datasource"
           },
-          "cacheDurationSeconds": 300,
+          "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/ppdm-activities",
           "fields": [
             {
               "jsonPath": "$.content[*].startTime",
@@ -297,10 +297,10 @@
             "uid": "${DS_JSON}",
             "type": "marcusolsson-json-datasource"
           },
-          "cacheDurationSeconds": 300,
+          "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/ppdm-activities",
           "fields": [
             {
               "jsonPath": "$.content[*].startTime",
@@ -362,10 +362,10 @@
             "uid": "${DS_JSON}",
             "type": "marcusolsson-json-datasource"
           },
-          "cacheDurationSeconds": 300,
+          "cacheDurationSeconds": 60,
           "method": "GET",
           "queryParams": "",
-          "urlPath": "",
+          "urlPath": "/ppdm-activities",
           "fields": [
             {
               "jsonPath": "$.content[*].name",
@@ -453,7 +453,7 @@
     {
       "name": "DS_JSON",
       "label": "JSON Datasource",
-      "description": "Datasource marcusolsson-json-datasource apontando para http://<ip>:3000/ppdm-activities",
+      "description": "Datasource marcusolsson-json-datasource apontando para http://<ip>:3000 (SEM /ppdm-activities no final)",
       "type": "datasource",
       "pluginId": "marcusolsson-json-datasource",
       "pluginName": "JSON API"

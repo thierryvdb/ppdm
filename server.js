@@ -177,6 +177,57 @@ app.get('/', sendActivities);
 // POST / – fallback para plugins que usam POST
 app.post('/', sendActivities);
 
+// ------------------------------------------------------------------
+// Endpoints para Grafana - retornam estatísticas pré-calculadas
+// ------------------------------------------------------------------
+
+// Estatísticas gerais para os painéis Stat do Grafana
+app.get('/stats', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json({ error: 'Dados ainda não disponíveis' });
+  }
+
+  const content = activitiesData.content;
+  const stats = {
+    total: content.length,
+    ok: content.filter(a => a.result?.status === 'OK').length,
+    failed: content.filter(a => a.result?.status === 'FAILED' || a.result?.status === 'ERROR').length,
+    warning: content.filter(a => a.result?.status === 'WARNING').length,
+    running: content.filter(a => a.result?.status === 'RUNNING').length
+  };
+
+  res.json(stats);
+});
+
+// Endpoint para contagem de jobs OK
+app.get('/stats/ok', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json({ error: 'Dados ainda não disponíveis' });
+  }
+  const count = activitiesData.content.filter(a => a.result?.status === 'OK').length;
+  res.json({ count });
+});
+
+// Endpoint para contagem de jobs Failed/Error
+app.get('/stats/failed', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json({ error: 'Dados ainda não disponíveis' });
+  }
+  const count = activitiesData.content.filter(a =>
+    a.result?.status === 'FAILED' || a.result?.status === 'ERROR'
+  ).length;
+  res.json({ count });
+});
+
+// Endpoint para contagem de jobs Warning
+app.get('/stats/warning', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json({ error: 'Dados ainda não disponíveis' });
+  }
+  const count = activitiesData.content.filter(a => a.result?.status === 'WARNING').length;
+  res.json({ count });
+});
+
 // Rota de health check
 app.get('/health', (_req, res) => {
   const tokenInfo = tokenExpirationTime ? {
