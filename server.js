@@ -330,7 +330,7 @@ app.get('/activity/stats', (req, res) => {
       ? Math.round(content.reduce((sum, a) => sum + (a.duration || 0), 0) / content.length / 60000 * 100) / 100
       : 0,
     totalBytes: content.reduce((sum, a) => sum + (a.stats?.bytesTransferred || 0), 0),
-    lastStatus: content.length > 0 ? content.sort((a, b) => new Date(b.startTime) - new Date(a.startTime))[0]?.result?.status || '' : ''
+    lastStatus: content.length > 0 ? (content.sort((a, b) => new Date(b.startTime) - new Date(a.startTime))[0]?.result?.status || 'N/A') : 'N/A'
   };
 
   res.json(stats);

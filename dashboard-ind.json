@@ -338,7 +338,8 @@
             { "type": "value", "options": { "FAILED": { "color": "red", "index": 1, "text": "FALHA" } } },
             { "type": "value", "options": { "ERROR": { "color": "red", "index": 2, "text": "ERRO" } } },
             { "type": "value", "options": { "WARNING": { "color": "yellow", "index": 3, "text": "ALERTA" } } },
-            { "type": "value", "options": { "RUNNING": { "color": "blue", "index": 4, "text": "EXECUTANDO" } } }
+            { "type": "value", "options": { "RUNNING": { "color": "blue", "index": 4, "text": "EXECUTANDO" } } },
+            { "type": "value", "options": { "N/A": { "color": "gray", "index": 5, "text": "N/A" } } }
           ],
           "thresholds": {
             "mode": "absolute",
