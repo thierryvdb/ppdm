@@ -35,6 +35,7 @@ const httpsAgent = new https.Agent({
 let activitiesData = null;
 let authToken = null;
 let tokenExpirationTime = null;
+const FALLBACK_HOST_NAME = 'se1.tre-se.gov.br';
 
 // Cache do mock para evitar releitura do disco a cada ciclo
 let mockCache = null;
@@ -232,7 +233,7 @@ app.get('/stats/summary', (_req, res) => {
     ? content.reduce((sum, activity) => sum + (activity.duration ?? 0), 0) / total
     : 0;
   const totalBytes = content.reduce((sum, activity) => sum + Number(activity.stats?.bytesTransferred ?? 0), 0);
-  const hostCount = new Set(content.map(activity => activity.host?.name || 'Sem host')).size;
+  const hostCount = new Set(content.map(activity => activity.host?.name || FALLBACK_HOST_NAME)).size;
 
   res.json({
     successRate: total ? (ok / total) * 100 : 0,
@@ -255,9 +256,8 @@ app.get('/stats/hosts', (_req, res) => {
 function buildHostMetrics(activities = []) {
   const hosts = {};
 
-  const fallbackHostName = 'se1.tre-se.gov.br';
   activities.forEach(activity => {
-    const hostName = activity.host?.name || fallbackHostName;
+    const hostName = activity.host?.name || FALLBACK_HOST_NAME;
     if (!hosts[hostName]) {
       hosts[hostName] = {
         name: hostName,
