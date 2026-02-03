@@ -12,30 +12,19 @@
       {
         "name": "atividade",
         "label": "Atividade",
-        "type": "query",
-        "datasource": {
-          "uid": "${DS_JSON}",
-          "type": "marcusolsson-json-datasource"
+        "description": "Digite o nome da atividade (copie da tabela do dashboard principal)",
+        "type": "textbox",
+        "current": {
+          "text": "",
+          "value": ""
         },
-        "definition": "",
-        "query": {
-          "cacheDurationSeconds": 60,
-          "method": "GET",
-          "queryParams": "",
-          "urlPath": "/activities/list",
-          "fields": [
-            {
-              "jsonPath": "$[*].name",
-              "type": "string",
-              "name": "name"
-            }
-          ]
-        },
-        "refresh": 1,
-        "regex": "",
-        "sort": 1,
-        "includeAll": false,
-        "multi": false
+        "options": [
+          {
+            "text": "",
+            "value": "",
+            "selected": true
+          }
+        ]
       }
     ]
   },
