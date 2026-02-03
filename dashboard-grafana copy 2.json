@@ -218,223 +218,9 @@
     },
     {
       "id": 5,
-      "type": "stat",
-      "title": "Taxa de sucesso",
-      "gridPos": { "x": 0, "y": 4, "w": 6, "h": 4 },
-      "datasource": {
-        "uid": "${DS_JSON}",
-        "type": "marcusolsson-json-datasource"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "uid": "${DS_JSON}",
-            "type": "marcusolsson-json-datasource"
-          },
-          "cacheDurationSeconds": 60,
-          "method": "GET",
-          "queryParams": "",
-          "urlPath": "/stats/summary",
-          "fields": [
-            {
-              "jsonPath": "$.successRate",
-              "type": "number",
-              "name": "successRate"
-            }
-          ]
-        }
-      ],
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": ["last"],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "value",
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "color": { "mode": "fixed", "fixedColor": "green" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "value": null, "color": "green" },
-              { "value": 80, "color": "lime" }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 6,
-      "type": "stat",
-      "title": "Duração média",
-      "gridPos": { "x": 6, "y": 4, "w": 6, "h": 4 },
-      "datasource": {
-        "uid": "${DS_JSON}",
-        "type": "marcusolsson-json-datasource"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "uid": "${DS_JSON}",
-            "type": "marcusolsson-json-datasource"
-          },
-          "cacheDurationSeconds": 60,
-          "method": "GET",
-          "queryParams": "",
-          "urlPath": "/stats/summary",
-          "fields": [
-            {
-              "jsonPath": "$.averageDurationMs",
-              "type": "number",
-              "name": "averageDurationMs"
-            }
-          ]
-        }
-      ],
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": ["last"],
-          "fields": ""
-        },
-        "justifyMode": "auto",
-        "graphMode": "none",
-        "textMode": "value",
-        "colorMode": "background"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms",
-          "displayName": "ms",
-          "color": { "mode": "fixed", "fixedColor": "#2563eb" },
-          "custom": {
-            "transform": "divide",
-            "factor": 60000,
-            "axisLabel": "min"
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 7,
-      "type": "stat",
-      "title": "Dados transferidos",
-      "gridPos": { "x": 12, "y": 4, "w": 6, "h": 4 },
-      "datasource": {
-        "uid": "${DS_JSON}",
-        "type": "marcusolsson-json-datasource"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "uid": "${DS_JSON}",
-            "type": "marcusolsson-json-datasource"
-          },
-          "cacheDurationSeconds": 60,
-          "method": "GET",
-          "queryParams": "",
-          "urlPath": "/stats/summary",
-          "fields": [
-            {
-              "jsonPath": "$.totalBytes",
-              "type": "number",
-              "name": "totalBytes"
-            }
-          ]
-        }
-      ],
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": ["last"],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "value",
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "color": { "mode": "fixed", "fixedColor": "#10b981" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "value": null, "color": "#10b981" }]
-          },
-          "custom": {
-            "axisLabel": "bytes"
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 8,
-      "type": "stat",
-      "title": "Hosts monitorados",
-      "gridPos": { "x": 18, "y": 4, "w": 6, "h": 4 },
-      "datasource": {
-        "uid": "${DS_JSON}",
-        "type": "marcusolsson-json-datasource"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "uid": "${DS_JSON}",
-            "type": "marcusolsson-json-datasource"
-          },
-          "cacheDurationSeconds": 60,
-          "method": "GET",
-          "queryParams": "",
-          "urlPath": "/stats/summary",
-          "fields": [
-            {
-              "jsonPath": "$.hostCount",
-              "type": "number",
-              "name": "hostCount"
-            }
-          ]
-        }
-      ],
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": ["last"],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "value",
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "#6366f1" }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 9,
       "type": "timeseries",
       "title": "Duração dos Jobs",
-      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
       "datasource": {
         "uid": "${DS_JSON}",
         "type": "marcusolsson-json-datasource"
@@ -497,10 +283,10 @@
       }
     },
     {
-      "id": 10,
+      "id": 6,
       "type": "timeseries",
       "title": "Bytes Transferidos",
-      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
       "datasource": {
         "uid": "${DS_JSON}",
         "type": "marcusolsson-json-datasource"
@@ -563,10 +349,10 @@
       }
     },
     {
-      "id": 11,
+      "id": 7,
       "type": "table",
       "title": "Detalhes das Atividades",
-      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 10 },
       "datasource": {
         "uid": "${DS_JSON}",
         "type": "marcusolsson-json-datasource"

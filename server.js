@@ -219,6 +219,29 @@ app.get('/stats/failed', (_req, res) => {
   res.json({ count });
 });
 
+// Endpoint com métricas agregadas usadas pelos novos cards do Grafana
+app.get('/stats/summary', (_req, res) => {
+  if (!activitiesData || !activitiesData.content) {
+    return res.status(503).json({ error: 'Dados ainda não disponíveis' });
+  }
+
+  const content = activitiesData.content;
+  const total = content.length;
+  const ok = content.filter(a => a.result?.status === 'OK').length;
+  const averageDurationMs = total
+    ? content.reduce((sum, activity) => sum + (activity.duration ?? 0), 0) / total
+    : 0;
+  const totalBytes = content.reduce((sum, activity) => sum + Number(activity.stats?.bytesTransferred ?? 0), 0);
+  const hostCount = new Set(content.map(activity => activity.host?.name || 'Sem host')).size;
+
+  res.json({
+    successRate: total ? (ok / total) * 100 : 0,
+    averageDurationMs,
+    totalBytes,
+    hostCount
+  });
+});
+
 // Endpoint para contagem de jobs Warning
 app.get('/stats/warning', (_req, res) => {
   if (!activitiesData || !activitiesData.content) {
