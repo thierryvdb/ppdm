@@ -1,0 +1,47 @@
+stages:
+  - deploy
+
+# Deploy automático quando houver mudanças
+deploy:
+  stage: deploy
+  script:
+    - echo "Atualizando código..."
+    - cd /mnt/backup/ppdm
+    - git pull origin main
+    - echo "Reiniciando containers..."
+    - docker compose down
+    - docker compose up -d --build
+    - echo "Deploy concluído!"
+  only:
+    refs:
+      - main
+      - master
+    changes:
+      - server.js
+      - package.json
+      - Dockerfile
+      - docker-compose.yml
+      - saida.json
+      - dashboard-grafana.json
+      - dashboard-ind.json
+      - frontend/**/*
+  tags:
+    - deploy
+    - shell
+  environment:
+    name: production
+
+# Deploy manual (botão no GitLab)
+deploy_manual:
+  stage: deploy
+  script:
+    - cd /mnt/backup/ppdm
+    - git pull origin main
+    - docker compose down
+    - docker compose up -d --build
+  when: manual
+  tags:
+    - deploy
+    - shell
+  environment:
+    name: production

@@ -326,6 +326,154 @@ Token sempre válido para requisições
 
 **Vantagem**: Se o timer de 55 minutos falhar ou o servidor reiniciar, a renovação reativa garante que o token seja renovado quando necessário.
 
+## Integração com Grafana
+
+O sistema fornece dashboards para o Grafana usando o plugin `marcusolsson-json-datasource`.
+
+### Dashboards Disponíveis
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `dashboard-grafana.json` | Dashboard principal com visão geral de todas as atividades |
+| `dashboard-ind.json` | Dashboard individual para análise detalhada de uma atividade específica |
+
+### Configuração do Datasource
+
+1. Instale o plugin `marcusolsson-json-datasource` no Grafana
+2. Crie um datasource do tipo "JSON API" apontando para `http://<ip-servidor>:3000`
+3. Importe os dashboards JSON
+
+### Endpoints para Grafana
+
+| Endpoint | Descrição |
+|----------|-----------|
+| `GET /stats` | Estatísticas gerais (total, ok, failed, warning) |
+| `GET /chart/duration` | Dados para gráfico de duração |
+| `GET /chart/bytes` | Dados para gráfico de bytes transferidos |
+| `GET /table/activities` | Dados para tabela de atividades |
+| `GET /activities/list` | Lista de atividades (para variáveis) |
+| `GET /activity/stats?name=X` | Estatísticas filtradas por atividade |
+| `GET /activity/duration?name=X` | Duração filtrada por atividade |
+| `GET /activity/bytes?name=X` | Bytes filtrados por atividade |
+| `GET /activity/executions?name=X` | Execuções filtradas por atividade |
+
+---
+
+## GitLab CI/CD - Deploy Automático
+
+O projeto inclui configuração para deploy automático via GitLab CI/CD.
+
+### Pré-requisitos
+
+1. GitLab Runner instalado no servidor de deploy
+2. Docker e Docker Compose instalados no servidor
+3. Acesso ao repositório Git no servidor
+
+### Instalação do GitLab Runner
+
+```bash
+# Adicionar repositório (Debian/Ubuntu)
+curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | sudo bash
+
+# Instalar
+sudo apt-get install gitlab-runner
+
+# Adicionar gitlab-runner ao grupo docker
+sudo usermod -aG docker gitlab-runner
+```
+
+### Registrar o Runner
+
+1. No GitLab, acesse: **Settings → CI/CD → Runners → New project runner**
+2. Copie o token de registro
+3. Execute no servidor:
+
+```bash
+sudo gitlab-runner register
+```
+
+Responda às perguntas:
+| Pergunta | Resposta |
+|----------|----------|
+| GitLab instance URL | `https://gitlab.com` (ou seu GitLab) |
+| Registration token | Cole o token copiado |
+| Description | `ppdm-deploy-server` |
+| Tags | `deploy,shell` |
+| Executor | `shell` |
+
+### Configuração do Repositório no Servidor
+
+```bash
+# Clone o repositório no servidor (primeira vez)
+cd /mnt/backup
+git clone <url-do-repositorio> ppdm
+cd ppdm
+
+# Configure as credenciais Git (para git pull automático)
+git config credential.helper store
+git pull  # Digite usuário/senha uma vez para salvar
+```
+
+### Funcionamento
+
+O pipeline é acionado automaticamente quando há push na branch `main` ou `master` com alterações nos seguintes arquivos:
+
+- `server.js`
+- `package.json`
+- `Dockerfile`
+- `docker-compose.yml`
+- `saida.json`
+- `dashboard-grafana.json`
+- `dashboard-ind.json`
+- `frontend/**/*`
+
+### Jobs Disponíveis
+
+| Job | Trigger | Descrição |
+|-----|---------|-----------|
+| `deploy` | Automático | Deploy quando há mudanças nos arquivos monitorados |
+| `deploy_manual` | Manual | Botão no GitLab para deploy forçado |
+
+### Variáveis de Ambiente (Opcional)
+
+Se preferir usar SSH ao invés do runner local, configure estas variáveis em **Settings → CI/CD → Variables**:
+
+| Variável | Descrição | Exemplo |
+|----------|-----------|---------|
+| `SSH_PRIVATE_KEY` | Chave SSH privada | Conteúdo do arquivo `id_rsa` |
+| `DEPLOY_SERVER` | IP do servidor | `192.168.0.64` |
+| `DEPLOY_USER` | Usuário SSH | `root` |
+| `DEPLOY_PATH` | Caminho do projeto | `/mnt/backup/ppdm` |
+
+### Verificar Status do Runner
+
+```bash
+# Ver status do runner
+sudo gitlab-runner status
+
+# Ver jobs em execução
+sudo gitlab-runner list
+
+# Logs do runner
+sudo journalctl -u gitlab-runner -f
+```
+
+### Troubleshooting
+
+```bash
+# Testar permissões do docker
+sudo -u gitlab-runner docker ps
+
+# Verificar se o runner está registrado
+sudo gitlab-runner verify
+
+# Re-registrar runner
+sudo gitlab-runner unregister --all-runners
+sudo gitlab-runner register
+```
+
+---
+
 ## Observações
 
 - O certificado SSL é aceito sem validação (apenas para desenvolvimento)
