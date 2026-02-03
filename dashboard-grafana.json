@@ -1,240 +1,494 @@
 {
   "id": null,
-  "uid": "jsds",
-  "title": "PPDM – Activities & Backup Health",
+  "uid": "ppdm-activities",
+  "title": "PPDM - Activities & Backup Health",
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 1,
   "refresh": "1m",
+  "editable": true,
   "panels": [
     {
+      "id": 1,
       "type": "stat",
       "title": "Total Activities",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "uid": "dsjs" },
-          "queryType": "json",
-          "rootSelector": "$.content[*]",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 300,
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "",
           "fields": [
-            { "name": "id", "jsonPath": "$.id", "type": "string" }
+            {
+              "jsonPath": "$.content[*].id",
+              "type": "string",
+              "name": "id"
+            }
           ]
         }
       ],
       "options": {
-        "reduceOptions": { "calcs": ["count"] },
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["count"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
         "colorMode": "background",
-        "graphMode": "none"
+        "graphMode": "none",
+        "justifyMode": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "blue" }
-        }
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "blue" }]
+          }
+        },
+        "overrides": []
       }
     },
     {
+      "id": 2,
       "type": "stat",
       "title": "Jobs OK",
       "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
       "targets": [
         {
-          "refId": "B",
-          "datasource": { "uid": "dsjs" },
-          "queryType": "json",
-          "rootSelector": "$.content[?(@.result.status=='OK')]",
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 300,
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "",
           "fields": [
-            { "name": "id", "jsonPath": "$.id", "type": "string" }
+            {
+              "jsonPath": "$.content[?(@.result.status=='OK')].id",
+              "type": "string",
+              "name": "id"
+            }
           ]
         }
       ],
       "options": {
-        "reduceOptions": { "calcs": ["count"] },
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["count"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
         "colorMode": "background",
-        "graphMode": "none"
+        "graphMode": "none",
+        "justifyMode": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "green" }
-        }
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "green" }]
+          }
+        },
+        "overrides": []
       }
     },
     {
+      "id": 3,
       "type": "stat",
       "title": "Jobs Failed / Error",
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
       "targets": [
         {
-          "refId": "C",
-          "datasource": { "uid": "dsjs" },
-          "queryType": "json",
-          "rootSelector": "$.content[?(@.result.status=='FAILED' || @.result.status=='ERROR')]",
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 300,
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "",
           "fields": [
-            { "name": "id", "jsonPath": "$.id", "type": "string" }
+            {
+              "jsonPath": "$.content[?(@.result.status=='FAILED' || @.result.status=='ERROR')].id",
+              "type": "string",
+              "name": "id"
+            }
           ]
         }
       ],
       "options": {
-        "reduceOptions": { "calcs": ["count"] },
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["count"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
         "colorMode": "background",
-        "graphMode": "none"
+        "graphMode": "none",
+        "justifyMode": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "red" }
-        }
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "red" }]
+          }
+        },
+        "overrides": []
       }
     },
     {
+      "id": 4,
       "type": "stat",
       "title": "Jobs Warning",
       "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
       "targets": [
         {
-          "refId": "W",
-          "datasource": { "uid": "dsjs" },
-          "queryType": "json",
-          "rootSelector": "$.content[?(@.result.status=='WARNING')]",
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 300,
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "",
           "fields": [
-            { "name": "id", "jsonPath": "$.id", "type": "string" }
+            {
+              "jsonPath": "$.content[?(@.result.status=='WARNING')].id",
+              "type": "string",
+              "name": "id"
+            }
           ]
         }
       ],
       "options": {
-        "reduceOptions": { "calcs": ["count"] },
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["count"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
         "colorMode": "background",
-        "graphMode": "none"
+        "graphMode": "none",
+        "justifyMode": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "yellow" }
-        }
+          "color": { "mode": "fixed", "fixedColor": "yellow" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "yellow" }]
+          }
+        },
+        "overrides": []
       }
     },
     {
+      "id": 5,
       "type": "timeseries",
       "title": "Job Duration",
-      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
       "targets": [
         {
-          "refId": "D",
-          "datasource": { "uid": "dsjs" },
-          "queryType": "json",
-          "rootSelector": "$.content[*]",
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 300,
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "",
           "fields": [
-            { "name": "startTime", "jsonPath": "$.startTime", "type": "time" },
-            { "name": "duration", "jsonPath": "$.duration", "type": "number" }
+            {
+              "jsonPath": "$.content[*].startTime",
+              "type": "time",
+              "name": "time"
+            },
+            {
+              "jsonPath": "$.content[*].duration",
+              "type": "number",
+              "name": "duration"
+            }
           ]
         }
       ],
+      "options": {
+        "tooltip": { "mode": "single", "sort": "none" },
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "ms"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "startTime" },
-            "properties": [
-              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": true, "viz": false } }
-            ]
+          "unit": "ms",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
           }
-        ]
+        },
+        "overrides": []
       }
     },
     {
+      "id": 6,
       "type": "timeseries",
       "title": "Bytes Transferred",
-      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 6 },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
       "targets": [
         {
-          "refId": "E",
-          "datasource": { "uid": "dsjs" },
-          "queryType": "json",
-          "rootSelector": "$.content[*]",
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 300,
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "",
           "fields": [
-            { "name": "startTime", "jsonPath": "$.startTime", "type": "time" },
-            { "name": "bytesTransferred", "jsonPath": "$.stats.bytesTransferred", "type": "number" }
+            {
+              "jsonPath": "$.content[*].startTime",
+              "type": "time",
+              "name": "time"
+            },
+            {
+              "jsonPath": "$.content[*].stats.bytesTransferred",
+              "type": "number",
+              "name": "bytes"
+            }
           ]
         }
       ],
+      "options": {
+        "tooltip": { "mode": "single", "sort": "none" },
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "decbytes"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "startTime" },
-            "properties": [
-              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": true, "viz": false } }
-            ]
+          "unit": "decbytes",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
           }
-        ]
+        },
+        "overrides": []
       }
     },
     {
+      "id": 7,
       "type": "table",
       "title": "Activity Details",
-      "gridPos": { "x": 0, "y": 10, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 10 },
+      "datasource": {
+        "uid": "${DS_JSON}",
+        "type": "marcusolsson-json-datasource"
+      },
       "targets": [
         {
-          "refId": "F",
-          "datasource": { "uid": "dsjs" },
-          "queryType": "json",
-          "rootSelector": "$.content[*]",
+          "refId": "A",
+          "datasource": {
+            "uid": "${DS_JSON}",
+            "type": "marcusolsson-json-datasource"
+          },
+          "cacheDurationSeconds": 300,
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "",
           "fields": [
-            { "name": "Name",       "jsonPath": "$.name",                    "type": "string" },
-            { "name": "Category",   "jsonPath": "$.category",                "type": "string" },
-            { "name": "Status",     "jsonPath": "$.result.status",           "type": "string" },
-            { "name": "State",      "jsonPath": "$.state",                   "type": "string" },
-            { "name": "Start",      "jsonPath": "$.startTime",               "type": "time"   },
-            { "name": "End",        "jsonPath": "$.endTime",                 "type": "time"   },
-            { "name": "Duration",   "jsonPath": "$.duration",                "type": "number" },
-            { "name": "Bytes",      "jsonPath": "$.stats.bytesTransferred",  "type": "number" }
+            {
+              "jsonPath": "$.content[*].name",
+              "type": "string",
+              "name": "Name"
+            },
+            {
+              "jsonPath": "$.content[*].category",
+              "type": "string",
+              "name": "Category"
+            },
+            {
+              "jsonPath": "$.content[*].result.status",
+              "type": "string",
+              "name": "Status"
+            },
+            {
+              "jsonPath": "$.content[*].state",
+              "type": "string",
+              "name": "State"
+            },
+            {
+              "jsonPath": "$.content[*].startTime",
+              "type": "time",
+              "name": "Start"
+            },
+            {
+              "jsonPath": "$.content[*].endTime",
+              "type": "time",
+              "name": "End"
+            },
+            {
+              "jsonPath": "$.content[*].duration",
+              "type": "number",
+              "name": "Duration"
+            },
+            {
+              "jsonPath": "$.content[*].stats.bytesTransferred",
+              "type": "number",
+              "name": "Bytes"
+            }
           ]
         }
       ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false
+        }
+      },
       "fieldConfig": {
+        "defaults": {},
         "overrides": [
           {
             "matcher": { "id": "byName", "options": "Duration" },
-            "properties": [
-              { "id": "unit", "value": "ms" }
-            ]
+            "properties": [{ "id": "unit", "value": "ms" }]
           },
           {
             "matcher": { "id": "byName", "options": "Bytes" },
-            "properties": [
-              { "id": "unit", "value": "decbytes" }
-            ]
+            "properties": [{ "id": "unit", "value": "decbytes" }]
           },
           {
             "matcher": { "id": "byName", "options": "Status" },
             "properties": [
               {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text"
-                }
-              },
-              {
                 "id": "mappings",
                 "value": [
-                  { "type": "value", "options": { "OK":      { "color": "green", "text": "OK" } } },
-                  { "type": "value", "options": { "FAILED":   { "color": "red",   "text": "FAILED" } } },
-                  { "type": "value", "options": { "ERROR":    { "color": "red",   "text": "ERROR" } } },
-                  { "type": "value", "options": { "WARNING":  { "color": "yellow","text": "WARNING" } } }
+                  { "type": "value", "options": { "OK": { "color": "green", "index": 0 } } },
+                  { "type": "value", "options": { "FAILED": { "color": "red", "index": 1 } } },
+                  { "type": "value", "options": { "ERROR": { "color": "red", "index": 2 } } },
+                  { "type": "value", "options": { "WARNING": { "color": "yellow", "index": 3 } } }
                 ]
-              }
+              },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } }
             ]
           }
         ]
-      },
-      "options": {
-        "showHeader": true,
-        "sortBy": [
-          { "displayName": "Start", "desc": true }
-        ]
       }
+    }
+  ],
+  "__inputs": [
+    {
+      "name": "DS_JSON",
+      "label": "JSON Datasource",
+      "description": "Datasource marcusolsson-json-datasource apontando para http://<ip>:3000/ppdm-activities",
+      "type": "datasource",
+      "pluginId": "marcusolsson-json-datasource",
+      "pluginName": "JSON API"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "marcusolsson-json-datasource",
+      "name": "JSON API",
+      "version": "1.3.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
     }
   ]
 }
