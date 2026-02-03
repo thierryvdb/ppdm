@@ -4,9 +4,31 @@ const axios = require('axios');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const promClient = require('prom-client');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const register = new promClient.Registry();
+promClient.collectDefaultMetrics({ register });
+
+const fetchDurationGauge = new promClient.Gauge({
+  name: 'ppdm_fetch_duration_seconds',
+  help: 'Duração da última sincronização com a API PPDM em segundos',
+  registers: [register]
+});
+
+const fetchSuccessGauge = new promClient.Gauge({
+  name: 'ppdm_fetch_success',
+  help: '1 quando a última sincronização foi bem-sucedida, 0 caso contrário',
+  registers: [register]
+});
+
+const activitiesCountGauge = new promClient.Gauge({
+  name: 'ppdm_activities_cached',
+  help: 'Quantidade de atividades armazenadas em cache pelo backend',
+  registers: [register]
+});
 
 // Middleware
 app.use(express.json());
@@ -36,6 +58,10 @@ let activitiesData = null;
 let authToken = null;
 let tokenExpirationTime = null;
 const FALLBACK_HOST_NAME = 'se1.tre-se.gov.br';
+
+function updateCacheMetrics(data) {
+  activitiesCountGauge.set(data?.content?.length ?? 0);
+}
 
 // Cache do mock para evitar releitura do disco a cada ciclo
 let mockCache = null;
@@ -92,16 +118,21 @@ function loadMockData() {
     );
     console.log(`[FETCH] ${mockCache.content?.length || 0} atividades carregadas do mock`);
   }
+  updateCacheMetrics(mockCache);
   return mockCache;
 }
 
 // Função para buscar atividades da API PPDM
 async function fetchActivities() {
+  const fetchStart = Date.now();
   try {
     // Se estiver em modo mock, usar o arquivo saida.json (cache em memória)
     if (process.env.USE_MOCK_DATA === 'true') {
       console.log('[FETCH] Usando dados mock (cache em memória)');
       activitiesData = loadMockData();
+      const durationSeconds = (Date.now() - fetchStart) / 1000;
+      fetchDurationGauge.set(durationSeconds);
+      fetchSuccessGauge.set(1);
       return activitiesData;
     }
 
@@ -130,10 +161,18 @@ async function fetchActivities() {
     );
 
     activitiesData = response.data;
+    updateCacheMetrics(activitiesData);
+    const durationSeconds = (Date.now() - fetchStart) / 1000;
+    fetchDurationGauge.set(durationSeconds);
+    fetchSuccessGauge.set(1);
     console.log(`[FETCH] ${response.data.content?.length || 0} atividades carregadas`);
     return response.data;
   } catch (error) {
+    const durationSeconds = (Date.now() - fetchStart) / 1000;
+    fetchDurationGauge.set(durationSeconds);
+    fetchSuccessGauge.set(0);
     console.error('[FETCH] Erro ao buscar atividades:', error.message);
+    updateCacheMetrics(activitiesData);
     if (error.response) {
       console.error('[FETCH] Status:', error.response.status);
       console.error('[FETCH] Dados:', error.response.data);
@@ -500,6 +539,11 @@ app.get('/health', (_req, res) => {
   });
 });
 
+app.get('/metrics', async (_req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.send(await register.metrics());
+});
+
 // Função para renovar o token proativamente
 async function startTokenRefreshService() {
   if (process.env.USE_MOCK_DATA !== 'true') {
@@ -542,6 +586,7 @@ app.listen(PORT, '0.0.0.0', async () => {
   console.log(`  GET  http://localhost:${PORT}/ppdm-activities`);
   console.log(`  POST http://localhost:${PORT}/ppdm-activities`);
   console.log(`  GET  http://localhost:${PORT}/health`);
+  console.log(`  GET  http://localhost:${PORT}/metrics`);
   console.log(`\nModo: ${process.env.USE_MOCK_DATA === 'true' ? 'MOCK (usando saida.json)' : 'API REAL'}\n`);
 
   // Iniciar serviço de sincronização
