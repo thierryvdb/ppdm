@@ -15,13 +15,13 @@
         "description": "Digite o nome da atividade (copie da tabela do dashboard principal)",
         "type": "textbox",
         "current": {
-          "text": "",
-          "value": ""
+          "text": "Protecting Oracle Databases - TRE_ORA_RMAN_ADM_SE1 - PROTECTION - Cumulative",
+          "value": "Protecting Oracle Databases - TRE_ORA_RMAN_ADM_SE1 - PROTECTION - Cumulative"
         },
         "options": [
           {
-            "text": "",
-            "value": "",
+            "text": "Protecting Oracle Databases - TRE_ORA_RMAN_ADM_SE1 - PROTECTION - Cumulative",
+            "value": "Protecting Oracle Databases - TRE_ORA_RMAN_ADM_SE1 - PROTECTION - Cumulative",
             "selected": true
           }
         ]
@@ -47,7 +47,7 @@
           },
           "cacheDurationSeconds": 60,
           "method": "GET",
-          "queryParams": "name=${atividade:percentencode}",
+          "queryParams": "name=${atividade}",
           "urlPath": "/activity/stats",
           "fields": [
             {
@@ -99,7 +99,7 @@
           },
           "cacheDurationSeconds": 60,
           "method": "GET",
-          "queryParams": "name=${atividade:percentencode}",
+          "queryParams": "name=${atividade}",
           "urlPath": "/activity/stats",
           "fields": [
             {
@@ -151,7 +151,7 @@
           },
           "cacheDurationSeconds": 60,
           "method": "GET",
-          "queryParams": "name=${atividade:percentencode}",
+          "queryParams": "name=${atividade}",
           "urlPath": "/activity/stats",
           "fields": [
             {
@@ -203,7 +203,7 @@
           },
           "cacheDurationSeconds": 60,
           "method": "GET",
-          "queryParams": "name=${atividade:percentencode}",
+          "queryParams": "name=${atividade}",
           "urlPath": "/activity/stats",
           "fields": [
             {
@@ -255,7 +255,7 @@
           },
           "cacheDurationSeconds": 60,
           "method": "GET",
-          "queryParams": "name=${atividade:percentencode}",
+          "queryParams": "name=${atividade}",
           "urlPath": "/activity/stats",
           "fields": [
             {
@@ -308,7 +308,7 @@
           },
           "cacheDurationSeconds": 60,
           "method": "GET",
-          "queryParams": "name=${atividade:percentencode}",
+          "queryParams": "name=${atividade}",
           "urlPath": "/activity/stats",
           "fields": [
             {
@@ -366,7 +366,7 @@
           },
           "cacheDurationSeconds": 60,
           "method": "GET",
-          "queryParams": "name=${atividade:percentencode}",
+          "queryParams": "name=${atividade}",
           "urlPath": "/activity/duration",
           "fields": [
             {
@@ -432,7 +432,7 @@
           },
           "cacheDurationSeconds": 60,
           "method": "GET",
-          "queryParams": "name=${atividade:percentencode}",
+          "queryParams": "name=${atividade}",
           "urlPath": "/activity/bytes",
           "fields": [
             {
@@ -498,7 +498,7 @@
           },
           "cacheDurationSeconds": 60,
           "method": "GET",
-          "queryParams": "name=${atividade:percentencode}",
+          "queryParams": "name=${atividade}",
           "urlPath": "/activity/executions",
           "fields": [
             {

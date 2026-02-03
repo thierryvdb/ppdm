@@ -307,13 +307,14 @@ app.get('/activities/list', (_req, res) => {
   res.json(names.map(name => ({ __text: name, __value: name, name })));
 });
 
-// Estatísticas filtradas por nome da atividade
+// Estatísticas filtradas por nome da atividade (query param ou path param)
 app.get('/activity/stats', (req, res) => {
   if (!activitiesData || !activitiesData.content) {
     return res.status(503).json({ error: 'Dados ainda não disponíveis' });
   }
 
   const activityName = req.query.name || '';
+  console.log(`[DEBUG] /activity/stats - name param: "${activityName}"`);
   const content = activitiesData.content.filter(a =>
     (a.classType === 'JOB_GROUP' || !a.parentId) &&
     a.name === activityName
