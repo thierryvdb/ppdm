@@ -232,7 +232,7 @@ app.get('/stats/warning', (_req, res) => {
 // Endpoints para gráficos e tabela do Grafana (arrays simples)
 // ------------------------------------------------------------------
 
-// Dados para o gráfico de duração (array de objetos com time e duration)
+// Dados para o gráfico de duração (array de objetos com time e duration em minutos)
 app.get('/chart/duration', (_req, res) => {
   if (!activitiesData || !activitiesData.content) {
     return res.status(503).json([]);
@@ -241,7 +241,7 @@ app.get('/chart/duration', (_req, res) => {
     .filter(a => a.startTime && a.duration)
     .map(a => ({
       time: a.startTime,
-      duration: a.duration
+      duration: Math.round(a.duration / 60000 * 100) / 100 // converte ms para minutos (2 decimais)
     }))
     .sort((a, b) => new Date(a.time) - new Date(b.time));
   res.json(data);
@@ -262,21 +262,23 @@ app.get('/chart/bytes', (_req, res) => {
   res.json(data);
 });
 
-// Dados para a tabela de atividades
+// Dados para a tabela de atividades (ordenado por start decrescente - mais recentes primeiro)
 app.get('/table/activities', (_req, res) => {
   if (!activitiesData || !activitiesData.content) {
     return res.status(503).json([]);
   }
-  const data = activitiesData.content.map(a => ({
-    name: a.name || '',
-    category: a.category || '',
-    status: a.result?.status || '',
-    state: a.state || '',
-    start: a.startTime || '',
-    end: a.endTime || '',
-    duration: a.duration || 0,
-    bytes: a.stats?.bytesTransferred || 0
-  }));
+  const data = activitiesData.content
+    .map(a => ({
+      name: a.name || '',
+      category: a.category || '',
+      status: a.result?.status || '',
+      state: a.state || '',
+      start: a.startTime || '',
+      end: a.endTime || '',
+      duration: a.duration || 0,
+      bytes: a.stats?.bytesTransferred || 0
+    }))
+    .sort((a, b) => new Date(b.start) - new Date(a.start));
   res.json(data);
 });
 

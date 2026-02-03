@@ -256,7 +256,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "ms",
+          "unit": "m",
           "color": { "mode": "palette-classic" },
           "custom": {
             "axisCenteredZero": false,
