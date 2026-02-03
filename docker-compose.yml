@@ -19,9 +19,8 @@ services:
     volumes:
       # Volume para o arquivo de dados mock
       - ./saida.json:/app/saida.json:ro
-      # Descomentar para desenvolvimento (hot reload)
-      # - ./server.js:/app/server.js
-      # - ./package.json:/app/package.json
+      # Montagem do server.js para refletir alterações
+      - ./server.js:/app/server.js:ro
     networks:
       - ppdm-network
     healthcheck:
