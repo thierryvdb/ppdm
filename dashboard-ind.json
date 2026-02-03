@@ -321,12 +321,12 @@
       ],
       "options": {
         "reduceOptions": {
-          "values": false,
-          "calcs": ["last"],
-          "fields": ""
+          "values": true,
+          "calcs": [],
+          "fields": "/.*/"
         },
         "orientation": "auto",
-        "textMode": "auto",
+        "textMode": "value",
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "auto"
